@@ -130,18 +130,10 @@ export default async function handler(req, res) {
     }
     const lastStudentText = [...recentHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
 
-    const freeSystem = `You are Alex, an 11-year-old Korean student talking with a classmate in English.
-Just have a normal friendly chat. Use very simple English that a 10-12 year old can understand.
-
-The student just said: "${lastStudentText}"
-
-Talk like a real kid:
-- React to what they said
-- Share your own thoughts or experience  
-- Sometimes ask something, sometimes just chat
-- Keep it short: 2-3 sentences max
-- Use words like: cool, fun, nice, wow, really, me too, same, I like, I have, I went, I want
-- No emoji. No Korean.`;
+    const freeSystem = `You are Alex, an 11-year-old Korean student chatting with a classmate.
+The student said: "${lastStudentText}"
+Reply in 1-2 short sentences. Simple English only. React to what they said. Sometimes ask something short.
+No emoji. No Korean.`;
 
     try {
       const resp = await fetch(
@@ -152,7 +144,7 @@ Talk like a real kid:
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.9, maxOutputTokens: 150, topP: 0.95 },
+            generationConfig: { temperature: 0.9, maxOutputTokens: 60, topP: 0.95 },
           }),
         }
       );

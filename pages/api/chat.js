@@ -125,26 +125,27 @@ export default async function handler(req, res) {
       role: t.speaker === 'AI' ? 'model' : 'user',
       parts: [{ text: t.text }]
     }));
-    if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
-      messages.push({ role: 'user', parts: [{ text: '(continue)' }] });
-    }
     const lastStudentText = [...recentHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
 
-    const freeSystem = `You are Alex, an 11-year-old Korean student chatting with a classmate.
-The student said: "${lastStudentText}"
-Reply in 1-2 short sentences. Simple English only. React to what they said. Sometimes ask something short.
-No emoji. No Korean.`;
+    // system_instruction 대신 대화 맨 앞에 삽입 (v1beta 호환)
+    const allMessages = [
+      { role: 'user', parts: [{ text: 'You are Alex, an 11-year-old Korean student. Chat naturally in simple English. React to what I say. 1-2 short sentences only. No emoji. No Korean.' }] },
+      { role: 'model', parts: [{ text: "Ok!" }] },
+      ...messages,
+    ];
+    if (allMessages[allMessages.length-1].role === 'model') {
+      allMessages.push({ role: 'user', parts: [{ text: lastStudentText || 'hi' }] });
+    }
 
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: freeSystem }] },
-            contents: messages,
-            generationConfig: { temperature: 0.9, maxOutputTokens: 100, topP: 0.95 },
+            contents: allMessages,
+            generationConfig: { temperature: 0.9, maxOutputTokens: 80, topP: 0.95 },
           }),
         }
       );

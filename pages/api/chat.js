@@ -128,34 +128,38 @@ export default async function handler(req, res) {
     if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
       messages.push({ role: 'user', parts: [{ text: '(continue)' }] });
     }
-    // 직전 학생 발화와 Alex 발화 추출
+    // 직전 학생 발화 추출
     const lastStudentText = [...recentHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
     const lastAlexText = [...recentHistory].reverse().find(t => t.speaker === 'AI')?.text || '';
     const prevQuestion = lastAlexText.match(/[^.!?]*\?/)?.[0]?.trim() || '';
+    const turnCount = recentHistory.filter(t => t.speaker === 'STUDENT').length;
 
-    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12) talking with a classmate.
-You are a STUDENT having a real conversation. NOT a teacher. NOT a quiz master.
+    const freeSystem = `You are Alex, a Korean elementary school student (age 11-12) talking with a classmate.
+You are having a REAL conversation, not a quiz or interview.
 
 The student just said: "${lastStudentText}"
 
-HOW TO RESPOND:
-- First: React naturally to what they said. Share YOUR opinion or experience about it.
-- Then: Sometimes ask a follow-up question, but NOT every single time. 
-  It is okay to just make a comment or share a story without asking anything.
+YOUR RESPONSE MUST follow this structure:
+Sentence 1: React to what the student said. Show you listened. Use their exact words.
+  - "Oh, you like pizza!"
+  - "Wow, you have a dog!"
+  - "Soccer is so fun!"
+  - "Mathematics is hard for me."
+  - "Sierra sounds so cool!"
 
-GOOD examples (natural conversation):
-- Student: "I like pizza" → "Me too! I always get extra cheese. My mom makes pizza at home sometimes."
-- Student: "how is the weather" → "It is really hot today! I was sweating on the way to school."  
-- Student: "I have a dog" → "Oh so cute! I want a dog too but my mom says no. What is your dog's name?"
-- Student: "I like swimming" → "Swimming is so fun! I went to the pool last summer. I cannot do butterfly stroke though."
+Sentence 2 (choose ONE based on turn number ${turnCount}):
+  - If turn is ODD: Share something about YOURSELF related to the topic.
+    "I love pizza too, especially with cheese."
+    "My dog is named Coco."
+    "I play soccer every Saturday."
+  - If turn is EVEN: Ask ONE short question related to what they said.
+    "What is your favorite pizza topping?"
+    "What is your dog's name?"
+    "What position do you play?"
 
-BAD examples (do NOT do this):
-- Do NOT always end with a question
-- Do NOT say "That is interesting! What is your favorite...?" — this sounds like a quiz
-- Do NOT ignore what they said and change the topic
-
-NEVER ask: "${prevQuestion || 'nothing'}"
-Write 2-3 short complete sentences. Use simple words. No emoji. No Korean.`;
+NEVER say: "${prevQuestion || 'nothing'}"
+NEVER ignore what the student said and change the topic completely.
+Keep sentences short and simple. No emoji. No Korean.`;
 
     try {
       const resp = await fetch(
@@ -166,29 +170,25 @@ Write 2-3 short complete sentences. Use simple words. No emoji. No Korean.`;
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 120, topP: 0.95 },
+            generationConfig: { temperature: 0.8, maxOutputTokens: 80, topP: 0.9 },
           }),
         }
       );
       const d = await resp.json();
       let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
-      if (!text || text.length < 5 || !text.match(/[.!?]$/)) {
-        const fallbacks = [
-          "That sounds fun! What do you like to do on weekends?",
-          "Oh nice! Do you have any pets?",
-          "Really? What is your favorite food?",
-          "Cool! What sports do you play?",
-          "Same here! What is your favorite subject?",
-        ];
-        text = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      if (!text || text.length < 5) {
+        // fallback도 학생 말에 반응하게
+        const word = lastStudentText.split(' ').slice(-1)[0] || 'that';
+        text = turnCount % 2 === 0
+          ? `Oh, ${word}! I like that too.`
+          : `Really? Tell me more about ${word}!`;
       }
       return res.status(200).json({ success: true, text });
     } catch(e) {
-      return res.status(200).json({ success: true, text: "That is cool! What do you like to do after school?" });
+      return res.status(200).json({ success: true, text: "Oh really! That sounds cool." });
     }
   }
-
   // 스몰톡: 2번 후 레슨 전환
   if (phase === 'smalltalk') {
     const studentTurns = conversationHistory.filter(t => t.speaker === 'STUDENT').length;

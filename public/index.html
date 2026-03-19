@@ -666,7 +666,6 @@ function startSession() {
 
   showScreen('chatScreen');
   updatePhaseUI();
-  document.getElementById('endLessonBtn').classList.remove('show');
   document.getElementById('endFreeBtn').classList.remove('show');
   initSpeech();
   const firstOpener = LESSON_OPENERS[S.lessonKey] || "Let's practice English!";
@@ -686,7 +685,6 @@ function updatePhaseUI() {
   banner.classList.remove('show');
   timerBar.classList.remove('show');
   turnBadge.style.display = 'none';
-  document.getElementById('endLessonBtn').classList.remove('show');
   document.getElementById('endFreeBtn').classList.remove('show');
 
   if (S.phase === 'smalltalk') {
@@ -699,7 +697,6 @@ function updatePhaseUI() {
     banner.textContent = `오늘 배운 걸 연습해 보자! Let's practice today's lesson!`;
     timerBar.classList.add('show');
     turnBadge.style.display = 'block';
-    document.getElementById('endLessonBtn').classList.add('show');
     startLessonTimer(90); // 1분 30초
   } else if (S.phase === 'free') {
     phaseBadge.textContent = '자유 연습';

@@ -327,7 +327,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Nunito',
     <div class="mic-label" id="micLabel">버튼을 누르고 영어로 말하세요</div>
     <div class="btn-row">
       <button class="action-btn retry" id="retryBtn" onclick="retryMic()">다시 말하기</button>
-      <button class="action-btn end-lesson" id="endLessonBtn" onclick="userEndLesson()">만화 보기</button>
       <button class="action-btn end-free" id="endFreeBtn" onclick="userEndFreetalk()">Bye! 그만할게요</button>
     </div>
   </div>
@@ -1190,12 +1189,16 @@ async function finishFreetalk() {
     avgLatencyMs:latencies.length?Math.round(latencies.reduce((a,b)=>a+b,0)/latencies.length):0,
     selfCorrections:0, durationSec,
   };
-  showScreen('comicLoadingScreen');
-  const [comicResult]=await Promise.all([
-    callComic(S.history, S.student.name),
-    callSave('freetalk',{freetalkSummary, turns:S.turns}),
-  ]);
-  showComicFinal(comicResult.success?comicResult.comicData:null);
+  // 만화 생성 없이 바로 데이터 저장 후 완료 화면
+  callSave('freetalk',{freetalkSummary, turns:S.turns});
+  showScreen('comicScreen');
+  document.getElementById('comicHdrTitle').textContent='오늘 연습 완료!';
+  document.getElementById('comicHdrSub').textContent=`${S.student.name}, 정말 잘 했어요!`;
+  document.getElementById('comicGrid').innerHTML='';
+  document.getElementById('cdCard').style.display='none';
+  document.getElementById('r2Btn').classList.remove('show');
+  document.getElementById('freeBtn').classList.remove('show');
+  document.getElementById('completeCard').classList.add('show');
 }
 
 // ═══════════════════════════════════════════════

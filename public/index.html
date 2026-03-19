@@ -1135,7 +1135,15 @@ function beginFreetalk() {
   showScreen('chatScreen');
   updatePhaseUI();
   initSpeech();
-  setTimeout(()=>aiSpeak("Great job! Now let's talk freely! What do you want to talk about?"),600);
+  const freeopeners = [
+    "Good job! By the way, I really like soccer. Do you play any sports?",
+    "Nice work! I had ramen for lunch today. What did you eat?",
+    "Well done! I have a cat at home. Do you have any pets?",
+    "Great! I watched a fun movie yesterday. Do you like movies?",
+    "Awesome! It is really hot today. What is the weather like where you are?",
+  ];
+  const freeopener = freeopeners[Math.floor(Math.random() * freeopeners.length)];
+  setTimeout(()=>aiSpeak(freeopener), 600);
 }
 
 function userEndFreetalk() {

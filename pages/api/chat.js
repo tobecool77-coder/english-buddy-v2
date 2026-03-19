@@ -349,7 +349,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: messages,
-          generationConfig: { temperature: 0.5, maxOutputTokens: 80, topP: 0.9 },
+          generationConfig: { temperature: 0.5, maxOutputTokens: 200, topP: 0.9 },
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_LOW_AND_ABOVE' },
             { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_LOW_AND_ABOVE' },

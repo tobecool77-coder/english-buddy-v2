@@ -128,20 +128,31 @@ export default async function handler(req, res) {
     if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
       messages.push({ role: 'user', parts: [{ text: '(continue)' }] });
     }
-    // 직전 Alex 질문 추출 → 반복 금지
+    // 직전 학생 발화와 Alex 발화 추출
+    const lastStudentText = [...recentHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
     const lastAlexText = [...recentHistory].reverse().find(t => t.speaker === 'AI')?.text || '';
     const prevQuestion = lastAlexText.match(/[^.!?]*\?/)?.[0]?.trim() || '';
-    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12) having a free English conversation.
+
+    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12).
 You are a STUDENT, not a teacher or AI.
 
-Rules:
-- Write exactly 2 complete sentences. NEVER cut off mid-sentence.
-- Always end with ONE question.
-- NEVER ask: "${prevQuestion || 'nothing'}" — ask something completely different.
-- Rotate topics every turn: sports → food → animals → school → hobbies → family → movies → games → travel → music → pets → back to sports.
-- React like a kid: "Me too!", "No way!", "Really?", "Same here!", "Oh nice!"
-- If student says bye/그만/stop → say a warm goodbye.
-- No emoji. No Korean.`;
+The student just said: "${lastStudentText}"
+
+STEP 1 - React to exactly what the student said. Reference their words directly.
+Examples:
+- Student: "how is the weather" → "It is sunny and warm today!"
+- Student: "I like pizza" → "Me too, pizza is so delicious!"
+- Student: "my favorite player is Son" → "Son Heung-min is so cool and fast!"
+
+STEP 2 - Ask ONE follow-up question about what they just said OR a related topic.
+Examples:
+- After weather → "Do you like sunny days or rainy days?"
+- After pizza → "What is your favorite topping on pizza?"
+- After Son → "Do you play soccer too?"
+
+NEVER ask: "${prevQuestion || 'nothing'}"
+Write 2 complete sentences total. No emoji. No Korean.`;
+
     try {
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -151,7 +162,7 @@ Rules:
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.95, maxOutputTokens: 120, topP: 0.95 },
+            generationConfig: { temperature: 0.8, maxOutputTokens: 120, topP: 0.95 },
           }),
         }
       );
@@ -160,17 +171,17 @@ Rules:
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
       if (!text || text.length < 5 || !text.match(/[.!?]$/)) {
         const fallbacks = [
-          "That sounds fun! What\'s your favorite animal?",
-          "Oh nice! What do you do on weekends?",
-          "Really? What\'s your favorite movie?",
-          "Cool! Do you play any instruments?",
-          "Same here! Where do you want to travel someday?",
+          "That sounds fun! What do you like to do on weekends?",
+          "Oh nice! Do you have any pets?",
+          "Really? What is your favorite food?",
+          "Cool! What sports do you play?",
+          "Same here! What is your favorite subject?",
         ];
         text = fallbacks[Math.floor(Math.random() * fallbacks.length)];
       }
       return res.status(200).json({ success: true, text });
     } catch(e) {
-      return res.status(200).json({ success: true, text: "That\'s cool! What\'s your favorite animal?" });
+      return res.status(200).json({ success: true, text: "That is cool! What do you like to do after school?" });
     }
   }
 

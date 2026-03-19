@@ -1,18 +1,18 @@
 // pages/api/chat.js
 
 const LESSON_INFO = {
-  '6-1':  { expr: 'What grade are you in? / I\'m in the [ordinal] grade.', alexAnswer: "I'm in the fifth grade." },
-  '6-2':  { expr: 'What season do you like? / I like [season].', alexAnswer: "I like spring." },
-  '6-3':  { expr: 'When is your birthday? / It\'s on [month] [day].', alexAnswer: "My birthday is on March 10th." },
-  '6-4':  { expr: 'Why are you happy? / Because [reason].', alexAnswer: "Because I got a perfect score." },
-  '6-5':  { expr: 'Where is [place]? / Go straight. Turn left/right.', alexAnswer: "Go straight and turn left." },
-  '6-6':  { expr: 'What does she look like? / She has [hair]. She is wearing [clothes].', alexAnswer: "She has short black hair." },
-  '6-7':  { expr: 'Can you come to [event]? / Sure, I can! / Sorry, I can\'t.', alexAnswer: "It's on September 29th." },
-  '6-8':  { expr: '[A] is [adj]-er than [B].', alexAnswer: "The elephant is bigger than the dog." },
-  '6-9':  { expr: 'What are you going to do? / I\'m going to [verb].', alexAnswer: "I'm going to go camping." },
-  '6-10': { expr: 'How often do you [verb]? / I [verb] [frequency].', alexAnswer: "I eat vegetables every day." },
-  '6-11': { expr: 'Do you know anything about [topic]? / Yes! It\'s [description].', alexAnswer: "Yes! It's a Korean arrow-throwing game." },
-  '6-12': { expr: 'We made a class album. / I made [object].', alexAnswer: "I made a photo book." },
+  '6-1':  { expr: 'What grade are you in? / I\'m in the [ordinal] grade.', alexAnswers: ["I'm in the fifth grade.", "I'm in the fourth grade.", "I'm in the sixth grade.", "I'm in the third grade."] },
+  '6-2':  { expr: 'What season do you like? / I like [season].', alexAnswers: ["I like spring.", "I like summer.", "I like fall.", "I like winter."] },
+  '6-3':  { expr: 'When is your birthday? / It\'s on [month] [day].', alexAnswers: ["My birthday is on March 10th.", "My birthday is on June 5th.", "My birthday is on November 20th.", "My birthday is on August 3rd."] },
+  '6-4':  { expr: 'Why are you happy? / Because [reason].', alexAnswers: ["Because I got a perfect score.", "Because I got new shoes.", "Because it's sunny today.", "Because I watched a fun movie."] },
+  '6-5':  { expr: 'Where is [place]? / Go straight. Turn left/right.', alexAnswers: ["Go straight and turn left.", "It's next to the bank.", "Go straight two blocks and turn right.", "It's across from the school."] },
+  '6-6':  { expr: 'What does she look like? / She has [hair]. She is wearing [clothes].', alexAnswers: ["She has short black hair.", "He has curly brown hair.", "She is wearing a red jacket.", "He is tall and has glasses."] },
+  '6-7':  { expr: 'Can you come to [event]? / Sure, I can! / Sorry, I can\'t.', alexAnswers: ["Sure, I can come!", "Sorry, I can't come.", "It's on September 29th.", "It's on October 5th."] },
+  '6-8':  { expr: '[A] is [adj]-er than [B].', alexAnswers: ["The elephant is bigger than the dog.", "The cheetah is faster than the horse.", "The mountain is taller than the building.", "The rock is heavier than the ball."] },
+  '6-9':  { expr: 'What are you going to do? / I\'m going to [verb].', alexAnswers: ["I'm going to go camping.", "I'm going to visit my grandma.", "I'm going to play soccer.", "I'm going to read a book."] },
+  '6-10': { expr: 'How often do you [verb]? / I [verb] [frequency].', alexAnswers: ["I eat vegetables every day.", "I exercise twice a week.", "I brush my teeth three times a day.", "I drink milk once a day."] },
+  '6-11': { expr: 'Do you know anything about [topic]? / Yes! It\'s [description].', alexAnswers: ["Yes! It's a Korean arrow-throwing game.", "No, I don't know.", "Yes! It's an Australian flying toy.", "Yes! It's a traditional Korean game."] },
+  '6-12': { expr: 'We made a class album. / I made [object].', alexAnswers: ["I made a photo book.", "I drew some pictures.", "I wrote a poem.", "I made a short video."] },
 };
 
 function getSystemInstruction(phase, lessonKey, lessonTitle) {
@@ -41,20 +41,21 @@ Rules:
   }
 
   // lesson
-  const info = LESSON_INFO[lessonKey] || { expr: 'Practice English!', alexAnswer: "I'm doing great!" };
+  const info = LESSON_INFO[lessonKey] || { expr: 'Practice English!', alexAnswers: ["I'm doing great!"] };
+  const alexAnswer = info.alexAnswers[Math.floor(Math.random() * info.alexAnswers.length)];
   return `You are Alex, a cheerful Korean elementary school student (age 11-12) practicing English with a classmate.
 You are a STUDENT, not a teacher or AI. Never say "I'm an AI" or "I'm a chatbot".
 
 Today's lesson: "${lessonTitle}"
 Key expression: ${info.expr}
-Your own answer when asked: "${info.alexAnswer}"
+Your own answer when asked: "${alexAnswer}"
 
 Conversation pattern — follow this strictly:
 1. You ask the key question.
 2. Student answers.
 3. You react briefly (1 word: "Oh!" / "Cool." / "Nice." / "Really?") + say "Now ask me!"
 4. Student asks you.
-5. You answer with: "${info.alexAnswer}" then ask the key question again.
+5. You answer with: "${alexAnswer}" then ask the key question again.
 
 Grammar correction rule:
 - If student makes a grammar mistake, silently use the correct form in your reply.
@@ -167,8 +168,9 @@ export default async function handler(req, res) {
       if (text.length < 5 || (!text.match(/[.!?]$/) && text.length < 20)) {
         console.warn('Incomplete response:', text);
         const info = LESSON_INFO[lessonKey];
+        const alexAnswer = info ? info.alexAnswers[Math.floor(Math.random() * info.alexAnswers.length)] : "I'm doing great.";
         const fallbacks = {
-          lesson: `Now ask me! ${info?.alexAnswer || "I'm doing great."}`,
+          lesson: `Now ask me! ${alexAnswer}`,
           smalltalk: "Me too! What's your favorite food?",
           free: "Oh really! What else do you like?",
         };

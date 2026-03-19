@@ -137,7 +137,7 @@ No emoji. No Korean.`;
 
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -151,13 +151,25 @@ No emoji. No Korean.`;
       );
       const d = await resp.json();
       let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      // 에러 상세 로깅
+      if (!text) console.error('Free talk empty response:', JSON.stringify(d).slice(0, 300));
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
       if (!text || text.length < 5) {
-        text = "Oh really! That is so cool. I want to try that too!";
+        // fallback도 학생 말 반영
+        const w = lastStudentText.split(' ').slice(-2).join(' ') || 'that';
+        const fallbacks = [
+          `Oh, ${w}! Me too!`,
+          `Really? I like ${w} too.`,
+          `Wow, ${w} sounds fun!`,
+          `Cool! I want to try ${w}.`,
+        ];
+        text = fallbacks[Math.floor(Math.random() * fallbacks.length)];
       }
       return res.status(200).json({ success: true, text });
     } catch(e) {
-      return res.status(200).json({ success: true, text: "Oh nice! Tell me more about it." });
+      console.error('Free talk error:', e.message);
+      const w = lastStudentText.split(' ').slice(-1)[0] || 'that';
+      return res.status(200).json({ success: true, text: `Oh, ${w}! That sounds fun.` });
     }
   }
   // 스몰톡: 2번 후 레슨 전환

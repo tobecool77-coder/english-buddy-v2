@@ -1,254 +1,348 @@
 // pages/api/chat.js
-// Gemini proxy - API key is safe server-side, never exposed to browser
 
-const FEW_SHOT = {
-  // ── 5학년 ──────────────────────────────────────────────────
-  '5-1': [
-    { role:'user', parts:[{text:'Where are you from?'}] },
-    { role:'model', parts:[{text:"I'm from Korea! Nice to meet you! 😊 Where are you from?"}] },
-    { role:'user', parts:[{text:'I from Canada.'}] },
-    { role:'model', parts:[{text:"Wow, you're from Canada! That's so cool! Is it cold there? 🍁"}] },
-    { role:'user', parts:[{text:'I am from Vietnam.'}] },
-    { role:'model', parts:[{text:"Vietnam! Wonderful! I'm from Korea. Where is your friend from?"}] },
-  ],
-  '5-2': [
-    { role:'user', parts:[{text:'What are these?'}] },
-    { role:'model', parts:[{text:"They are forks! Great! 🍴 What are those?"}] },
-    { role:'user', parts:[{text:'These is scissors.'}] },
-    { role:'model', parts:[{text:"They are scissors! Good job! ✂️ What are these over here?"}] },
-    { role:'user', parts:[{text:'They are button.'}] },
-    { role:'model', parts:[{text:"They are buttons! Nice! What are those on the shelf?"}] },
-  ],
-  '5-3': [
-    { role:'user', parts:[{text:'Can I take picture?'}] },
-    { role:'model', parts:[{text:"Can I take pictures? Yes, you can! 📸 Can I sit here?"}] },
-    { role:'user', parts:[{text:'Yes you can.'}] },
-    { role:'model', parts:[{text:"Yes, you can! 🎉 Can I bring animals here? No, you can't! Can I ride a bike?"}] },
-    { role:'user', parts:[{text:'No you cant.'}] },
-    { role:'model', parts:[{text:"No, you can't! Perfect! Can I borrow a pen? 🖊️"}] },
-  ],
-  '5-4': [
-    { role:'user', parts:[{text:'Whose phone is this?'}] },
-    { role:'model', parts:[{text:"It's Aladdin's! Great question! 📱 Whose pencil case is this?"}] },
-    { role:'user', parts:[{text:"It Jasmine."}] },
-    { role:'model', parts:[{text:"It's Jasmine's! Well done! Whose textbook is that?"}] },
-    { role:'user', parts:[{text:"It's mine."}] },
-    { role:'model', parts:[{text:"It's mine! 🎒 Whose bottle is that on the desk?"}] },
-  ],
-  '5-5': [
-    { role:'user', parts:[{text:"Let's go shopping."}] },
-    { role:'model', parts:[{text:"Sounds good! 🛍️ Let's go to the movies! How about you?"}] },
-    { role:'user', parts:[{text:"Sorry I busy."}] },
-    { role:'model', parts:[{text:"Sorry, but I'm busy! Good try! 😅 Let's play a board game! What do you think?"}] },
-    { role:'user', parts:[{text:"Sound good."}] },
-    { role:'model', parts:[{text:"Sounds good! 🎲 Let's read comic books! Do you like reading?"}] },
-  ],
-  '5-6': [
-    { role:'user', parts:[{text:"I'll go beach."}] },
-    { role:'model', parts:[{text:"I'll go to the beach! 🏖️ That sounds so fun! What will you do there?"}] },
-    { role:'user', parts:[{text:"I will visit grandpa."}] },
-    { role:'model', parts:[{text:"I'll visit my grandpa! How sweet! 👴 Will you eat delicious food together?"}] },
-    { role:'user', parts:[{text:"I'll learn taekwondo."}] },
-    { role:'model', parts:[{text:"Wow, taekwondo! That's awesome! 🥋 What else will you do this summer?"}] },
-  ],
-  '5-7': [
-    { role:'user', parts:[{text:"I visit grandma yesterday."}] },
-    { role:'model', parts:[{text:"I visited my grandma! How nice! 👵 What did you do with her?"}] },
-    { role:'user', parts:[{text:"I play basketball."}] },
-    { role:'model', parts:[{text:"I played basketball! 🏀 Great! Did you win the game?"}] },
-    { role:'user', parts:[{text:"I went festival."}] },
-    { role:'model', parts:[{text:"I went to a festival! 🎉 How exciting! What did you eat there?"}] },
-  ],
-  '5-8': [
-    { role:'user', parts:[{text:"I like fruit salad."}] },
-    { role:'model', parts:[{text:"I'd like a fruit salad! 🥗 Good choice! What would you like to drink?"}] },
-    { role:'user', parts:[{text:"I'd like cheese pizza."}] },
-    { role:'model', parts:[{text:"I'd like a cheese pizza! 🍕 Yummy! What would your friend like?"}] },
-    { role:'user', parts:[{text:"What you like?"}] },
-    { role:'model', parts:[{text:"What would you like? I'd like tomato spaghetti! 🍝 How about you?"}] },
-  ],
-  '5-9': [
-    { role:'user', parts:[{text:"How much shoes?"}] },
-    { role:'model', parts:[{text:"How much are the shoes? They are thirty thousand won! 👟 How much are the gloves?"}] },
-    { role:'user', parts:[{text:"They are ten thousand."}] },
-    { role:'model', parts:[{text:"They are ten thousand won! Good! 💰 How much are the pants?"}] },
-    { role:'user', parts:[{text:"How much are socks?"}] },
-    { role:'model', parts:[{text:"How much are the socks? They are twenty thousand won! 🧦 What about the glasses?"}] },
-  ],
-  '5-10': [
-    { role:'user', parts:[{text:"I get up seven."}] },
-    { role:'model', parts:[{text:"I get up at 7! ⏰ Early bird! What time do you study English?"}] },
-    { role:'user', parts:[{text:"I study English 3:30."}] },
-    { role:'model', parts:[{text:"I study English at 3:30! 📚 Great! What time do you go to bed?"}] },
-    { role:'user', parts:[{text:"I go bed at ten."}] },
-    { role:'model', parts:[{text:"I go to bed at 10! 😴 Good night! What time do you eat breakfast?"}] },
-  ],
-  '5-11': [
-    { role:'user', parts:[{text:"My favorite is math."}] },
-    { role:'model', parts:[{text:"My favorite subject is math! 🔢 Cool! What are you good at?"}] },
-    { role:'user', parts:[{text:"I good at drawing."}] },
-    { role:'model', parts:[{text:"I'm good at drawing pictures! 🎨 Amazing! What's your favorite subject?"}] },
-    { role:'user', parts:[{text:"My subject is science."}] },
-    { role:'model', parts:[{text:"My favorite subject is science! 🔬 Wow! Are you good at it?"}] },
-  ],
-  '5-12': [
-    { role:'user', parts:[{text:"I want be scientist."}] },
-    { role:'model', parts:[{text:"I want to be a scientist! 🔭 Amazing! Why do you want to be a scientist?"}] },
-    { role:'user', parts:[{text:"I want to be soccer player."}] },
-    { role:'model', parts:[{text:"I want to be a soccer player! ⚽ Do you practice every day?"}] },
-    { role:'user', parts:[{text:"What you want to be?"}] },
-    { role:'model', parts:[{text:"What do you want to be? I want to be a travel writer! ✈️ How about you?"}] },
-  ],
-  // ── 6학년 ──────────────────────────────────────────────────
-  '6-1': [
-    { role:'user', parts:[{text:"I in sixth grade."}] },
-    { role:'model', parts:[{text:"I'm in the sixth grade! 🏫 Great! What class are you in?"}] },
-    { role:'user', parts:[{text:"sixth"}] },
-    { role:'model', parts:[{text:"Try saying: I'm in the sixth grade! What grade are you in?"}] },
-    { role:'user', parts:[{text:"I'm in the fifth grade."}] },
-    { role:'model', parts:[{text:"I'm in the fifth grade! Wonderful! What grade is your friend in?"}] },
-  ],
-  '6-2': [
-    { role:'user', parts:[{text:"I like spring."}] },
-    { role:'model', parts:[{text:"I like spring too! 🌸 What can you do in spring?"}] },
-    { role:'user', parts:[{text:"I can go field trip."}] },
-    { role:'model', parts:[{text:"I can go on field trips! 🌿 Nice! What season do you like?"}] },
-    { role:'user', parts:[{text:"I like winter I can make snowman."}] },
-    { role:'model', parts:[{text:"I like winter! I can make a snowman! ⛄ That sounds so fun! Do you like snow?"}] },
-  ],
-  '6-3': [
-    { role:'user', parts:[{text:"It's on April."}] },
-    { role:'model', parts:[{text:"It's on April 22nd! 🎂 When is your birthday?"}] },
-    { role:'user', parts:[{text:"My birthday March 5th."}] },
-    { role:'model', parts:[{text:"It's on March 5th! 🎉 Great! When is Sports Day at your school?"}] },
-    { role:'user', parts:[{text:"It's on May 15."}] },
-    { role:'model', parts:[{text:"It's on May 15th! 🏃 Cool! When is the school festival?"}] },
-  ],
-  '6-4': [
-    { role:'user', parts:[{text:"Because I have math test."}] },
-    { role:'model', parts:[{text:"Oh, because you have a math test! 😟 Why are you happy today?"}] },
-    { role:'user', parts:[{text:"I sad because dog sick."}] },
-    { role:'model', parts:[{text:"I'm sad because my dog is sick! 🐶 Poor thing! Why are you happy?"}] },
-    { role:'user', parts:[{text:"Because I got black belt."}] },
-    { role:'model', parts:[{text:"Because I got a black belt! 🥋 Wow, amazing! Why are you excited?"}] },
-  ],
-  '6-5': [
-    { role:'user', parts:[{text:"Go straight and turn left."}] },
-    { role:'model', parts:[{text:"Go straight one block and turn left! 🗺️ Great! Where is the bank?"}] },
-    { role:'user', parts:[{text:"It next to hospital."}] },
-    { role:'model', parts:[{text:"It's next to the hospital! Good! 🏥 Where is the bus stop?"}] },
-    { role:'user', parts:[{text:"Where is library?"}] },
-    { role:'model', parts:[{text:"Where is the library? Go straight two blocks and turn left at the bank! 📚"}] },
-  ],
-  '6-6': [
-    { role:'user', parts:[{text:"She have long hair."}] },
-    { role:'model', parts:[{text:"She has long brown hair! 👧 What does he look like?"}] },
-    { role:'user', parts:[{text:"He wearing blue shirt."}] },
-    { role:'model', parts:[{text:"He is wearing a blue shirt! 👕 Nice! What does she look like?"}] },
-    { role:'user', parts:[{text:"She has short black hair."}] },
-    { role:'model', parts:[{text:"She has short black hair! ✨ Great description! What is she wearing?"}] },
-  ],
-  '6-7': [
-    { role:'user', parts:[{text:"Can you come party?"}] },
-    { role:'model', parts:[{text:"Can you come to the party? 🎉 It's on Saturday! Can you come?"}] },
-    { role:'user', parts:[{text:"It's on September."}] },
-    { role:'model', parts:[{text:"It's on September 29th! 📅 Great! When is your school festival?"}] },
-    { role:'user', parts:[{text:"I can come."}] },
-    { role:'model', parts:[{text:"Great, you can come! 🎊 What will you bring to the party?"}] },
-  ],
-  '6-8': [
-    { role:'user', parts:[{text:"Train is bigger than car."}] },
-    { role:'model', parts:[{text:"The train is bigger than the car! 🚂 What is faster than a bike?"}] },
-    { role:'user', parts:[{text:"Basketball more big."}] },
-    { role:'model', parts:[{text:"The basketball is bigger! Good try! 🏀 What is heavier than a baseball?"}] },
-    { role:'user', parts:[{text:"Elephant is heavier than dog."}] },
-    { role:'model', parts:[{text:"The elephant is heavier than the dog! 🐘 Great! What is taller than a tree?"}] },
-  ],
-  '6-9': [
-    { role:'user', parts:[{text:"I going to go camping."}] },
-    { role:'model', parts:[{text:"I'm going to go camping! ⛺ Fun! What are you going to eat there?"}] },
-    { role:'user', parts:[{text:"We going watch basketball."}] },
-    { role:'model', parts:[{text:"We're going to watch basketball! 🏀 Exciting! What are you going to wear?"}] },
-    { role:'user', parts:[{text:"I'm going to visit my grandpa."}] },
-    { role:'model', parts:[{text:"I'm going to visit my grandpa! 👴 So sweet! What are you going to do together?"}] },
-  ],
-  '6-10': [
-    { role:'user', parts:[{text:"I eat vegetable every day."}] },
-    { role:'model', parts:[{text:"I eat vegetables every day! 🥦 So healthy! How often do you exercise?"}] },
-    { role:'user', parts:[{text:"I exercise once week."}] },
-    { role:'model', parts:[{text:"I exercise once a week. You should exercise more! 💪 How often do you brush your teeth?"}] },
-    { role:'user', parts:[{text:"I brush teeth three times."}] },
-    { role:'model', parts:[{text:"I brush my teeth three times a day! 🦷 Excellent habit! How often do you eat breakfast?"}] },
-  ],
-  '6-11': [
-    { role:'user', parts:[{text:"Yes I know. It Korean game."}] },
-    { role:'model', parts:[{text:"Yes! It's a Korean game! 🎯 Do you know anything about boomerangs?"}] },
-    { role:'user', parts:[{text:"No I don't know."}] },
-    { role:'model', parts:[{text:"No, I don't! That's okay! 😊 Do you know anything about nón lá?"}] },
-    { role:'user', parts:[{text:"Do you know anything about saris?"}] },
-    { role:'model', parts:[{text:"Yes, I do! They're Indian dresses! 🪱 Do you know anything about yakgwa?"}] },
-  ],
-  '6-12': [
-    { role:'user', parts:[{text:"She won car race."}] },
-    { role:'model', parts:[{text:"She won the car race! 🏆 Amazing! What did he do?"}] },
-    { role:'user', parts:[{text:"He clean park."}] },
-    { role:'model', parts:[{text:"He cleaned the park! 🌿 Great job! What did Amy make?"}] },
-    { role:'user', parts:[{text:"She made birdhouse."}] },
-    { role:'model', parts:[{text:"She made a nice birdhouse! 🐦 How creative! What did they take?"}] },
-  ],
+// ── 단원별 핵심 표현 & 대화 패턴 ──────────────────────────────────────────
+// few-shot을 별도 배열로 쓰지 않고, system prompt 안의 예시 대화로 완전히 통합
+// Alex는 항상 "학생 캐릭터"처럼 답함 — AI / chatbot 발언 절대 금지
+
+const LESSON_META = {
+  '5-1': {
+    topic: 'countries and origins',
+    keyExpression: 'Where are you from? / I\'m from [country].',
+    example: `Alex: Where are you from?
+Student: I'm from Korea.
+Alex: Oh nice! I'm from Canada. Where is your friend from?
+Student: She is from Japan.
+Alex: Japan! Cool. Is she good at origami?`,
+  },
+  '5-2': {
+    topic: 'identifying objects (these/those)',
+    keyExpression: 'What are these? / They are [objects].',
+    example: `Alex: Look at my desk. What are these?
+Student: They are pencils.
+Alex: Right! And what are those over there?
+Student: Those are scissors.
+Alex: Yes! Are they yours?`,
+  },
+  '5-3': {
+    topic: 'asking permission (Can I ...?)',
+    keyExpression: 'Can I [verb]? / Yes, you can. / No, you can\'t.',
+    example: `Alex: Can I borrow your eraser?
+Student: Yes, you can.
+Alex: Thanks! Can I sit here?
+Student: No, you can't.
+Alex: Oh, is someone sitting there?`,
+  },
+  '5-4': {
+    topic: 'possessives (Whose ... is this?)',
+    keyExpression: 'Whose [noun] is this? / It\'s [name]\'s.',
+    example: `Alex: Whose pencil case is this?
+Student: It's Mia's.
+Alex: Oh, it's Mia's. Whose bag is that?
+Student: It's mine.
+Alex: Lucky! It looks cool.`,
+  },
+  '5-5': {
+    topic: 'making suggestions (Let\'s ...)',
+    keyExpression: 'Let\'s [verb]! / Sounds good! / Sorry, but I\'m busy.',
+    example: `Alex: Let's go to the park!
+Student: Sounds good!
+Alex: Let's play basketball there.
+Student: Sorry, but I'm busy today.
+Alex: That's okay. What are you doing?`,
+  },
+  '5-6': {
+    topic: 'future plans (will)',
+    keyExpression: 'What will you do this summer? / I\'ll [verb].',
+    example: `Alex: What will you do this summer?
+Student: I'll go to the beach.
+Alex: Nice! I'll visit my grandpa. Will you swim at the beach?
+Student: Yes, I will.
+Alex: Sounds fun! Will you eat seafood there?`,
+  },
+  '5-7': {
+    topic: 'past tense (went, visited, played)',
+    keyExpression: 'What did you do? / I [past verb] ...',
+    example: `Alex: What did you do last weekend?
+Student: I went to a festival.
+Alex: Cool! I visited my grandma. What did you eat at the festival?
+Student: I ate tteokbokki.
+Alex: Yum! Did you play any games there?`,
+  },
+  '5-8': {
+    topic: 'ordering food (would like)',
+    keyExpression: 'What would you like? / I\'d like [food].',
+    example: `Alex: What would you like to eat?
+Student: I'd like a hamburger.
+Alex: Sounds good! I'd like pizza. What would you like to drink?
+Student: I'd like orange juice.
+Alex: Me too! Do you like spicy food?`,
+  },
+  '5-9': {
+    topic: 'prices and shopping',
+    keyExpression: 'How much are [item]? / They are [price] won.',
+    example: `Alex: How much are these shoes?
+Student: They are fifty thousand won.
+Alex: Wow, that's expensive! How much are those gloves?
+Student: They are ten thousand won.
+Alex: That's cheap! Do you like shopping?`,
+  },
+  '5-10': {
+    topic: 'daily schedule and time',
+    keyExpression: 'What time do you [verb]? / I [verb] at [time].',
+    example: `Alex: What time do you get up?
+Student: I get up at 7.
+Alex: Early! I get up at 7:30. What time do you eat breakfast?
+Student: I eat breakfast at 7:30.
+Alex: Same as me! What time do you go to school?`,
+  },
+  '5-11': {
+    topic: 'favorite subject and skills',
+    keyExpression: 'My favorite subject is [subject]. / I\'m good at [noun/verb-ing].',
+    example: `Alex: What's your favorite subject?
+Student: My favorite subject is science.
+Alex: Cool! Mine is PE. Are you good at science experiments?
+Student: Yes, I'm good at it.
+Alex: Impressive! What are you good at in PE?`,
+  },
+  '5-12': {
+    topic: 'future jobs and dreams',
+    keyExpression: 'What do you want to be? / I want to be a [job].',
+    example: `Alex: What do you want to be?
+Student: I want to be a doctor.
+Alex: That's great! I want to be a pilot. Why do you want to be a doctor?
+Student: Because I want to help sick people.
+Alex: That's really kind. Do you like science?`,
+  },
+  '6-1': {
+    topic: 'school grade and class',
+    keyExpression: 'What grade are you in? / I\'m in the [ordinal] grade.',
+    example: `Alex: What grade are you in?
+Student: I'm in the sixth grade.
+Alex: Me too! What class are you in?
+Student: I'm in class 3.
+Alex: I'm in class 2. How many students are in your class?`,
+  },
+  '6-2': {
+    topic: 'seasons and activities',
+    keyExpression: 'What season do you like? / I like [season]. I can [activity].',
+    example: `Alex: What season do you like?
+Student: I like winter.
+Alex: I like spring! In spring, I can go on picnics. What can you do in winter?
+Student: I can make a snowman.
+Alex: Fun! Can you ski in winter?`,
+  },
+  '6-3': {
+    topic: 'dates and birthdays',
+    keyExpression: 'When is your birthday? / It\'s on [month] [day].',
+    example: `Alex: When is your birthday?
+Student: It's on June 5th.
+Alex: Cool! Mine is on March 10th. When is Children's Day?
+Student: It's on May 5th.
+Alex: Right! Do you get presents on your birthday?`,
+  },
+  '6-4': {
+    topic: 'emotions and reasons (because)',
+    keyExpression: 'Why are you [emotion]? / Because [reason].',
+    example: `Alex: Why are you happy today?
+Student: Because I got a perfect score on my test.
+Alex: That's awesome! I'm excited because I got new sneakers. Why are you tired?
+Student: Because I played soccer all day.
+Alex: That sounds exhausting! Are you good at soccer?`,
+  },
+  '6-5': {
+    topic: 'giving directions',
+    keyExpression: 'Where is [place]? / Go straight. Turn left/right.',
+    example: `Alex: Where is the library?
+Student: Go straight one block and turn left.
+Alex: Got it! Where is the post office?
+Student: It's next to the bank.
+Alex: Thanks! Is it far from here?`,
+  },
+  '6-6': {
+    topic: 'describing appearance',
+    keyExpression: 'What does [he/she] look like? / [He/She] has [hair]. [He/She] is wearing [clothes].',
+    example: `Alex: What does your best friend look like?
+Student: She has long black hair.
+Alex: My friend has short brown hair. What is she wearing today?
+Student: She is wearing a blue jacket.
+Alex: Nice! Is she tall or short?`,
+  },
+  '6-7': {
+    topic: 'invitations and schedules',
+    keyExpression: 'Can you come to [event]? / It\'s on [date]. / Sure, I can come!',
+    example: `Alex: Can you come to my birthday party?
+Student: Sure, I can come! When is it?
+Alex: It's on Saturday, July 10th. Can you bring a friend?
+Student: Yes, I can.
+Alex: Great! Do you like birthday parties?`,
+  },
+  '6-8': {
+    topic: 'comparatives (bigger, taller, faster)',
+    keyExpression: '[A] is [adjective]-er than [B].',
+    example: `Alex: Is an elephant bigger than a horse?
+Student: Yes, an elephant is bigger than a horse.
+Alex: Right! Is a cheetah faster than a lion?
+Student: Yes, a cheetah is faster than a lion.
+Alex: Cool! What animal do you think is the strongest?`,
+  },
+  '6-9': {
+    topic: 'future plans (going to)',
+    keyExpression: 'What are you going to do? / I\'m going to [verb].',
+    example: `Alex: What are you going to do this weekend?
+Student: I'm going to go camping.
+Alex: Fun! I'm going to visit my cousin. Are you going to cook outside?
+Student: Yes, I'm going to make ramen.
+Alex: Yum! Who are you going with?`,
+  },
+  '6-10': {
+    topic: 'frequency adverbs and healthy habits',
+    keyExpression: 'How often do you [verb]? / I [verb] [frequency].',
+    example: `Alex: How often do you eat vegetables?
+Student: I eat vegetables every day.
+Alex: Healthy! I eat vegetables twice a week. How often do you exercise?
+Student: I exercise three times a week.
+Alex: Nice! What kind of exercise do you do?`,
+  },
+  '6-11': {
+    topic: 'traditional games and culture',
+    keyExpression: 'Do you know anything about [topic]? / Yes! It\'s [description]. / No, I don\'t.',
+    example: `Alex: Do you know anything about Tuho?
+Student: Yes! It's a Korean arrow-throwing game.
+Alex: Right! Do you know anything about boomerangs?
+Student: No, I don't know.
+Alex: That's okay! It's an Australian flying toy. Do you want to try Tuho?`,
+  },
+  '6-12': {
+    topic: 'past achievements (made, won, cleaned)',
+    keyExpression: '[Subject] [past verb] [object].',
+    example: `Alex: What did you make last week?
+Student: I made a birdhouse.
+Alex: Cool! I won a drawing contest. What did your friend do?
+Student: She cleaned the park.
+Alex: That's so nice! Are you proud of her?`,
+  },
 };
 
-function buildSystemPrompt(lessonKey, lessonTitle, round) {
-  const isFree = lessonKey === 'FREE';
-  if (isFree) {
-    return `You are "Alex", a cheerful English chatbot for Korean elementary students (grades 5-6).
-FREE TALKING MODE — talk about anything the student wants!
-STRICT RULES:
-1. Use ONLY simple words (elementary level, max 800 word vocabulary)
-2. Maximum 10 words per sentence
-3. ALWAYS end your response with ONE question
-4. Be warm, fun, and encouraging
-5. If the student says "bye", "그만", or "stop" → say goodbye warmly
-6. Profanity detected → respond: "I cannot understand that. Please try again! 😊"
-7. Never use Korean in your response`;
+const SMALLTALK_TOPICS = [
+  "How are you today?",
+  "What did you eat for lunch?",
+  "Do you have any pets?",
+  "What's your favorite food?",
+  "Did you play outside today?",
+  "What's the weather like today?",
+];
+
+// ── System Prompt Builder ─────────────────────────────────────────────────────
+function buildSystemPrompt(phase, lessonKey, lessonTitle, round) {
+
+  // ── FREE TALK ──────────────────────────────────────────────────────────────
+  if (phase === 'free') {
+    return `You are playing a character named Alex — a friendly Korean elementary school student who loves talking in English.
+You are NOT a chatbot or AI. Never say "I'm a chatbot", "I'm an AI", "Great question!", or anything like that.
+You are just a fun kid having a conversation.
+
+RULES:
+- Max 10 simple words per sentence
+- Always end with one natural question
+- If the student says "bye", "그만", or "stop" → say a warm goodbye like a friend would
+- Never speak Korean
+- No emoji in your responses
+
+HOW TO TALK:
+- React like a real kid: "Oh really?" / "No way!" / "Me too!" / "That's so fun!"
+- Share your own opinion: "I like pizza too." / "I don't like bugs."
+- Keep it natural and casual`;
   }
-  return `You are "Alex", a cheerful English chatbot for Korean elementary students (grades 5-6).
-TODAY'S LESSON: "${lessonTitle}" | ROUND: ${round}
+
+  // ── SMALLTALK ─────────────────────────────────────────────────────────────
+  if (phase === 'smalltalk') {
+    const starter = SMALLTALK_TOPICS[Math.floor(Math.random() * SMALLTALK_TOPICS.length)];
+    return `You are playing a character named Alex — a friendly Korean elementary school student who loves talking in English.
+You are NOT a chatbot or AI. Never say "I'm a chatbot", "I'm an AI", or anything robotic.
+You are just a kid chatting before class.
+
+RULES:
+- Max 8 simple words per sentence
+- Always end with one simple question about daily life (food, pets, weather, hobbies)
+- Do NOT mention any lesson or study topic
+- Never speak Korean
+- No emoji in your responses
+- React like a real kid, not a teacher
+
+EXAMPLE NATURAL REACTIONS (use these styles):
+- "Oh really? That sounds yummy!"
+- "Me too! I love ramen."
+- "No way! That's so funny."
+- "Wow. I didn't know that."
+
+A good opening question to consider: "${starter}"`;
+  }
+
+  // ── LESSON ────────────────────────────────────────────────────────────────
+  const meta = LESSON_META[lessonKey];
+  if (!meta) {
+    return `You are Alex, a friendly kid practicing English with a classmate. Keep it short, simple, always ask one question. No emoji.`;
+  }
+
+  return `You are playing a character named Alex — a Korean elementary school student practicing English with a classmate.
+You are NOT a chatbot or AI. Never say things like "I'm a chatbot", "I'm an AI", "Good question!", "Great job!", or "You're doing so well!"
+
+TODAY'S LESSON: "${lessonTitle}"
+TOPIC: ${meta.topic}
+KEY EXPRESSION: ${meta.keyExpression}
+ROUND: ${round === 2 ? '2 (student has practiced before — expect a bit more fluency)' : '1 (first try — be patient)'}
+
+YOUR ROLE IN THE CONVERSATION:
+You and the student take turns asking and answering using today's key expressions.
+Pattern:
+  1. You ask a question using today's expression
+  2. Student answers
+  3. You say "Now ask me!" or "Your turn!" and the student asks you the same question
+  4. You answer like a real student (not a teacher)
+  5. Repeat with a new topic or detail
+
+EXAMPLE CONVERSATION (use this as your model):
+${meta.example}
+
 STRICT RULES:
-1. Use ONLY simple words (elementary level, max 800 word vocabulary)
-2. Maximum 10 words per sentence
-3. ALWAYS end your response with ONE question related to the lesson
-4. If the student makes a grammar error, use the correct form naturally in your reply
-5. Add encouragement: "Great!", "Wow!", "Nice!", "Perfect!"
-6. ${round === 1 ? 'Be very gentle and supportive — this is their first try.' : 'Student practiced before — be slightly more expansive and encourage detail.'}
-7. Stay focused on the lesson topic
-8. Profanity detected → respond: "I cannot understand that. Please try again! 😊"
-9. Never use Korean in your response`;
+- Max 10 simple words per sentence
+- Always end your turn with one question
+- If the student makes a grammar error, use the correct form naturally in your own reply — do NOT say "You should say..." or "The correct form is..."
+  Example: Student says "I from Korea." → You reply: "Oh, you're from Korea! I'm from Busan." (corrected naturally)
+- Never praise excessively. Short reactions only: "Oh nice." / "Really?" / "Me too." / "Cool!"
+- Never say "Wow!", "Amazing!", "You're so smart!", "Good question!", "Great job!"
+- Answer like a real kid: give actual answers like "I'm in the fifth grade." not "As an AI I don't have a grade."
+- Never speak Korean
+- No emoji in your responses`;
 }
 
+// ── Handler ────────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { conversationHistory, lessonKey, lessonTitle, round } = req.body;
+  const { conversationHistory, lessonKey, lessonTitle, round, phase } = req.body;
 
   if (!conversationHistory || !lessonKey) {
     return res.status(400).json({ success: false, text: 'Missing required fields' });
   }
 
-  try {
-    const systemPrompt = buildSystemPrompt(lessonKey, lessonTitle, round);
-    const fewShots = FEW_SHOT[lessonKey] || [];
+  const PROFANITY = ['shit','fuck','damn','ass','bitch','crap','bastard'];
+  const lastMsg = conversationHistory[conversationHistory.length - 1]?.text?.toLowerCase() || '';
+  if (PROFANITY.some(w => lastMsg.includes(w))) {
+    return res.status(200).json({ success: true, text: "I cannot understand that. Please try again." });
+  }
 
-    // Build full message array: system injection + few-shot + conversation
+  try {
+    const systemPrompt = buildSystemPrompt(phase || 'lesson', lessonKey, lessonTitle, round);
+
+    // few-shot은 system prompt 안의 EXAMPLE CONVERSATION으로 대체 — 별도 배열 불필요
     const messages = [
       { role: 'user', parts: [{ text: systemPrompt }] },
-      { role: 'model', parts: [{ text: "Got it! I'm Alex, ready to help students practice English! 😊" }] },
-      ...fewShots,
+      { role: 'model', parts: [{ text: "Got it. I'm Alex, a student. Let's talk!" }] },
       ...conversationHistory.map(t => ({
         role: t.speaker === 'AI' ? 'model' : 'user',
         parts: [{ text: t.text }]
@@ -262,14 +356,10 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: messages,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 150,
-            topP: 0.9,
-          },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 150, topP: 0.9 },
           safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_LOW_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_LOW_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_LOW_AND_ABOVE' },
             { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
           ],
@@ -280,25 +370,26 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Gemini API error:', response.status, errText);
-      return res.status(200).json({ success: false, text: "Sorry, can you try again? 😊" });
+      return res.status(200).json({ success: false, text: "Sorry, can you try again?" });
     }
 
     const data = await response.json();
 
     if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      const text = data.candidates[0].content.parts[0].text.trim();
+      // 이모지 제거 (TTS 안전)
+      let text = data.candidates[0].content.parts[0].text.trim();
+      text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
       return res.status(200).json({ success: true, text });
     }
 
-    // Blocked by safety filter
     if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-      return res.status(200).json({ success: true, text: "I cannot understand that. Please try again! 😊" });
+      return res.status(200).json({ success: true, text: "I cannot understand that. Please try again." });
     }
 
-    return res.status(200).json({ success: false, text: "Sorry, can you try again? 😊" });
+    return res.status(200).json({ success: false, text: "Sorry, can you try again?" });
 
   } catch (e) {
     console.error('Chat handler error:', e);
-    return res.status(200).json({ success: false, text: "Sorry, there was a problem! Please try again. 😊" });
+    return res.status(200).json({ success: false, text: "Sorry, there was a problem! Please try again." });
   }
 }

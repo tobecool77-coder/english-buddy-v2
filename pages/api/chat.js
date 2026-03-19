@@ -88,24 +88,30 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, text: "I cannot understand that. Please try again." });
   }
 
-  // ── FREE TALK: 별도 처리 ─────────────────────────────────────────────────
+  // ── FREE TALK ────────────────────────────────────────────────────────────
   if (phase === 'free') {
-    const messages = conversationHistory.map(t => ({
+    // 최근 10턴만 사용
+    const recentHistory = conversationHistory.slice(-10);
+    const messages = recentHistory.map(t => ({
       role: t.speaker === 'AI' ? 'model' : 'user',
       parts: [{ text: t.text }]
     }));
     if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
-      messages.push({ role: 'user', parts: [{ text: '(start)' }] });
+      messages.push({ role: 'user', parts: [{ text: '(continue)' }] });
     }
-    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12) having a free conversation in English.
+    // 직전 Alex 질문 추출 → 반복 금지
+    const lastAlexText = [...recentHistory].reverse().find(t => t.speaker === 'AI')?.text || '';
+    const prevQuestion = lastAlexText.match(/[^.!?]*\?/)?.[0]?.trim() || '';
+    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12) having a free English conversation.
 You are a STUDENT, not a teacher or AI.
 
 Rules:
 - Write exactly 2 complete sentences. NEVER cut off mid-sentence.
-- Always end with ONE question that is DIFFERENT from any previous question in the conversation.
-- Vary topics: food, sports, animals, school, hobbies, family, weather, movies, games, travel.
-- React like a real kid: "Me too!", "No way!", "Really?", "I love that!", "Same here!", "Oh nice!"
-- If student says bye/그만/stop → say a warm goodbye in 1 sentence.
+- Always end with ONE question.
+- NEVER ask: "${prevQuestion || 'nothing'}" — ask something completely different.
+- Rotate topics every turn: sports → food → animals → school → hobbies → family → movies → games → travel → music → pets → back to sports.
+- React like a kid: "Me too!", "No way!", "Really?", "Same here!", "Oh nice!"
+- If student says bye/그만/stop → say a warm goodbye.
 - No emoji. No Korean.`;
     try {
       const resp = await fetch(
@@ -116,7 +122,7 @@ Rules:
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.9, maxOutputTokens: 120, topP: 0.95 },
+            generationConfig: { temperature: 0.95, maxOutputTokens: 120, topP: 0.95 },
           }),
         }
       );
@@ -124,17 +130,18 @@ Rules:
       let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
       if (!text || text.length < 5 || !text.match(/[.!?]$/)) {
-        const freeFallbacks = [
-          "Me too! What's your favorite sport?",
-          "Oh nice! Do you have any pets?",
-          "Really? What do you do on weekends?",
-          "Same here! What's your favorite subject?",
+        const fallbacks = [
+          "That sounds fun! What\'s your favorite animal?",
+          "Oh nice! What do you do on weekends?",
+          "Really? What\'s your favorite movie?",
+          "Cool! Do you play any instruments?",
+          "Same here! Where do you want to travel someday?",
         ];
-        text = freeFallbacks[Math.floor(Math.random() * freeFallbacks.length)];
+        text = fallbacks[Math.floor(Math.random() * fallbacks.length)];
       }
       return res.status(200).json({ success: true, text });
     } catch(e) {
-      return res.status(200).json({ success: true, text: "Me too! What's your favorite sport?" });
+      return res.status(200).json({ success: true, text: "That\'s cool! What\'s your favorite animal?" });
     }
   }
 

@@ -46,7 +46,6 @@ emotion must be one of: happy, excited, thinking, surprised, proud, shy, laughin
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.3, maxOutputTokens: 1000 },
-          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     );

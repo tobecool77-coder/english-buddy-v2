@@ -392,18 +392,18 @@ const LESSONS = {
 };
 
 const LESSON_OPENERS = {
-  '6-1': "What grade are you in? I'm in the sixth grade! What grade are you in?",
-  '6-2': "What season do you like? I like spring! What season do you like?",
-  '6-3': "When is your birthday? It's on April 22nd! When is your birthday?",
-  '6-4': "Why are you happy? Because I got a perfect score! Why are you happy?",
-  '6-5': "Where is the library? Go straight and turn left! Where is the bank?",
-  '6-6': "What does she look like? She has short black hair! What does he look like?",
-  '6-7': "Can you come to the festival? It's on September 29th! When is your school event?",
-  '6-8': "The elephant is bigger than the dog! What is taller than a tree?",
-  '6-9': "What are you going to do? I'm going to go camping! What are you going to do?",
-  '6-10': "How often do you eat vegetables? I eat vegetables every day! How often do you exercise?",
-  '6-11': "Do you know anything about Tuho? Yes! It's a Korean game! Do you know anything about yut?",
-  '6-12': "We made a class album! I made a photo book! What did you make?",
+  '6-1':  "Let's practice today's lesson! What grade are you in?",
+  '6-2':  "Let's practice today's lesson! What season do you like?",
+  '6-3':  "Let's practice today's lesson! When is your birthday?",
+  '6-4':  "Let's practice today's lesson! Why are you happy?",
+  '6-5':  "Let's practice today's lesson! Where is the library?",
+  '6-6':  "Let's practice today's lesson! What does she look like?",
+  '6-7':  "Let's practice today's lesson! Can you come to my party?",
+  '6-8':  "Let's practice today's lesson! Is an elephant bigger than a horse?",
+  '6-9':  "Let's practice today's lesson! What are you going to do this weekend?",
+  '6-10': "Let's practice today's lesson! How often do you eat vegetables?",
+  '6-11': "Let's practice today's lesson! Do you know anything about Tuho?",
+  '6-12': "Let's practice today's lesson! What did you make for the class album?",
 };
 
 // 배경별 색상 팔레트
@@ -658,7 +658,7 @@ function startSession() {
 
   S.student = {grade, classNum, number, name};
   S.lessonKey = lessonKey; S.lessonTitle = lessonTitle;
-  S.round = 1; S.phase = 'smalltalk'; S.smalltalkCount = 0;
+  S.round = 1; S.phase = 'lesson'; S.smalltalkCount = 0;
   S.sessionId = `${grade}-${classNum}-${number}-${name}-${Date.now()}`;
   S.sessionStart = Date.now();
   S.history = []; S.turns = []; S.studentTurnCount = 0;
@@ -669,7 +669,8 @@ function startSession() {
   document.getElementById('endLessonBtn').classList.remove('show');
   document.getElementById('endFreeBtn').classList.remove('show');
   initSpeech();
-  setTimeout(() => aiSpeak("Hi! I'm Alex. How are you today?", 'smalltalk'), 600);
+  const firstOpener = LESSON_OPENERS[S.lessonKey] || "Let's practice English!";
+  setTimeout(() => aiSpeak(firstOpener), 600);
 }
 
 // ═══════════════════════════════════════════════
@@ -1003,34 +1004,6 @@ async function handleStudentSpeech(text) {
   showTyping();
   S.aiThinking=true;
 
-  // Smalltalk phase: 2 student turns → switch to lesson
-  if (S.phase==='smalltalk') {
-    if (S.smalltalkCount >= 1) {
-      // After 2nd student smalltalk response
-      const result = await callChat('smalltalk');
-      hideTyping();
-      if (result.success) {
-        // Speak last smalltalk response then switch
-        S.aiThinking=false;
-        addMessage('AI', result.text);
-        S.history.push({speaker:'AI', text:result.text, timestamp:Date.now()});
-        speak(result.text);
-        setTimeout(()=>{
-          switchToLesson();
-        }, 2500);
-      } else {
-        switchToLesson();
-      }
-      return;
-    }
-    S.smalltalkCount++;
-    const result = await callChat('smalltalk');
-    hideTyping();
-    if (result.success) aiSpeak(result.text, 'smalltalk');
-    else aiSpeak("That's great! What's the weather like today?", 'smalltalk');
-    return;
-  }
-
   // Free talk end condition
   const freeEnd = S.phase==='free' && ['bye','그만','stop','끝','그만요'].some(w=>text.toLowerCase().includes(w));
   const freeTurnEnd = S.phase==='free' && S.studentTurnCount >= 10;
@@ -1152,7 +1125,7 @@ function startRound2() {
   updatePhaseUI();
   initSpeech();
   const opener = LESSON_OPENERS[S.lessonKey] || "Let's practice again!";
-  setTimeout(()=>aiSpeak("Welcome back! Let's practice one more time! " + opener), 600);
+  setTimeout(()=>aiSpeak(opener), 600);
 }
 
 function beginFreetalk() {

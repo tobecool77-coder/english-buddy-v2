@@ -144,7 +144,8 @@ No emoji. No Korean.`;
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.9, maxOutputTokens: 60, topP: 0.95 },
+            generationConfig: { temperature: 0.9, maxOutputTokens: 100, topP: 0.95 },
+            thinkingConfig: { thinkingBudget: 0 },
           }),
         }
       );

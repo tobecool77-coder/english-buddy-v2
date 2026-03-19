@@ -22,20 +22,14 @@ export default async function handler(req, res) {
   // 대화가 너무 짧으면 패딩
   const hasEnough = slice.length >= 4;
 
-  const prompt = `Create a 4-panel comic strip from this English conversation between Alex (a robot) and ${sName} (a student).
+  const prompt = `Make a 4-panel comic from this conversation. Use the actual words.
 
-Conversation:
 ${dialogText}
 
-IMPORTANT: Use the EXACT words from the conversation above for speech bubbles.
-Each speech bubble must be under 8 words.
-If the conversation is short, repeat or paraphrase the key expressions.
+JSON only, no markdown:
+{"title":"short title","panels":[{"panel":1,"setting":"classroom","alexSays":"short quote","studentSays":"short quote","alexEmotion":"happy","studentEmotion":"happy"},{"panel":2,"setting":"classroom","alexSays":"short quote","studentSays":"short quote","alexEmotion":"excited","studentEmotion":"thinking"},{"panel":3,"setting":"classroom","alexSays":"short quote","studentSays":"short quote","alexEmotion":"proud","studentEmotion":"happy"},{"panel":4,"setting":"classroom","alexSays":"Great job!","studentSays":"Thank you!","alexEmotion":"excited","studentEmotion":"happy"}]}
 
-Return ONLY this JSON, nothing else, no markdown:
-{"title":"[5 words max]","panels":[{"panel":1,"setting":"classroom","alexSays":"[from conversation]","studentSays":"[from conversation]","alexEmotion":"happy","studentEmotion":"happy"},{"panel":2,"setting":"classroom","alexSays":"[from conversation]","studentSays":"[from conversation]","alexEmotion":"excited","studentEmotion":"thinking"},{"panel":3,"setting":"classroom","alexSays":"[from conversation]","studentSays":"[from conversation]","alexEmotion":"proud","studentEmotion":"happy"},{"panel":4,"setting":"classroom","alexSays":"See you next time!","studentSays":"Bye Alex!","alexEmotion":"excited","studentEmotion":"happy"}]}
-
-setting must be one of: classroom, playground, cafeteria, library, park
-emotion must be one of: happy, excited, thinking, surprised, proud, shy, laughing`;
+setting: classroom/playground/park/library. emotion: happy/excited/thinking/surprised/proud`;
 
   try {
     const response = await fetch(
@@ -45,7 +39,7 @@ emotion must be one of: happy, excited, thinking, surprised, proud, shy, laughin
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 1000 },
+          generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
         }),
       }
     );

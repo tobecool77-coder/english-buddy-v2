@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "pages/api/chat.js": {
+      "maxDuration": 30
+    },
+    "pages/api/comic.js": {
+      "maxDuration": 30
+    }
+  }
+}

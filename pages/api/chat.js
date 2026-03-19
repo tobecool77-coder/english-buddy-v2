@@ -145,7 +145,6 @@ No emoji. No Korean.`;
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
             generationConfig: { temperature: 0.9, maxOutputTokens: 100, topP: 0.95 },
-            thinkingConfig: { thinkingBudget: 0 },
           }),
         }
       );

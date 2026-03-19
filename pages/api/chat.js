@@ -15,6 +15,35 @@ const LESSON_INFO = {
   '6-12': { expr: 'We made a class album. / I made [object].', questions: ['What did you make?', 'What did you put in the album?'], alexAnswers: ["I made a photo book.", "I drew some pictures.", "I wrote a poem.", "I made a short video."] },
 };
 
+function detectGrammarError(text, lessonKey) {
+  if (!text) return null;
+  const lower = text.toLowerCase().trim();
+  if (lessonKey === '6-1') {
+    if (lower.match(/^i'm in (the )?(first|second|third|fourth|fifth|sixth) grade/)) return null;
+    if (lower.match(/i in (the )?(first|second|third|fourth|fifth|sixth)/)) {
+      const m = lower.match(/(first|second|third|fourth|fifth|sixth)/);
+      return m ? `Oh, you're in the ${m[0]} grade!` : null;
+    }
+    if (lower.match(/i'm in a (first|second|third|fourth|fifth|sixth)/)) {
+      const m = lower.match(/(first|second|third|fourth|fifth|sixth)/);
+      return m ? `Oh, you're in the ${m[0]} grade!` : null;
+    }
+  }
+  if (lessonKey === '6-2') {
+    if (lower.match(/i likes? (spring|summer|fall|autumn|winter)/)) {
+      const m = lower.match(/(spring|summer|fall|autumn|winter)/);
+      return m ? `Oh, you like ${m[0]}!` : null;
+    }
+  }
+  if (lessonKey === '6-9') {
+    if (lower.match(/i going to|i will going/)) {
+      const m = lower.match(/(?:going to|will going) (.+)/);
+      return m ? `Oh, you're going to ${m[1]}!` : null;
+    }
+  }
+  return null;
+}
+
 function getSystemInstruction(phase, lessonKey, lessonTitle) {
   if (phase === 'free') {
     return `You are Alex, a cheerful Korean elementary school student (age 11-12) chatting with a classmate in English.

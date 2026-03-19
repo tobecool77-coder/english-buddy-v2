@@ -615,6 +615,7 @@ const S = {
   smalltalkCount:0,
   sessionId:'', sessionStart:0,
   history:[], turns:[], studentTurnCount:0,
+  lessonHistory: [], // 레슨 대화만 따로 저장 → 만화용
   aiThinking:false,
   isSpeaking:false,
   recognition:null, recActive:false, gotFinal:false,
@@ -653,6 +654,7 @@ function startSession() {
   S.sessionId = `${grade}-${classNum}-${number}-${name}-${Date.now()}`;
   S.sessionStart = Date.now();
   S.history = []; S.turns = []; S.studentTurnCount = 0;
+  S.lessonHistory = [];
 
   showScreen('chatScreen');
   updatePhaseUI();
@@ -941,6 +943,7 @@ function aiSpeak(text, phaseOverride) {
   addMessage('AI', text);
   S.history.push({speaker:'AI', text, timestamp:Date.now()});
   S.turns.push({turnNumber:S.turns.length+1, speaker:'AI', text, timestamp:Date.now()});
+  if (S.phase === 'lesson') S.lessonHistory.push({speaker:'AI', text});
   speak(text);
 
   // TTS 길이 추정 + 잔향 대기 1500ms 추가 (갤탭 스피커 잔향이 마이크에 잡히는 것 방지)
@@ -985,6 +988,7 @@ async function handleStudentSpeech(text) {
 
   S.history.push({speaker:'STUDENT', text, timestamp:now});
   S.turns.push({turnNumber:S.turns.length+1, speaker:'STUDENT', text, timestamp:now, latencyMs, durationMs, wordCount:wc, wpm, wpmGrade});
+  if (S.phase === 'lesson') S.lessonHistory.push({speaker:'STUDENT', text});
 
   setMicUI('disabled');
   document.getElementById('voiceHint').textContent='Alex가 생각하고 있어요...';
@@ -1037,6 +1041,7 @@ async function handleStudentSpeech(text) {
 function switchToLesson() {
   S.phase='lesson';
   S.history=[];
+  S.lessonHistory=[];
   S.studentTurnCount=0;
   document.getElementById('messages').innerHTML='';
   updatePhaseUI();
@@ -1116,7 +1121,7 @@ async function finishRound() {
 
   showScreen('comicLoadingScreen');
   const [comicResult] = await Promise.all([
-    callComic(S.history, S.student.name),
+    callComic(S.lessonHistory.length >= 4 ? S.lessonHistory : S.history, S.student.name),
     callSave('session',{sessionSummary:summary, turns:S.turns, round:S.round}),
   ]);
 
@@ -1129,7 +1134,7 @@ function startRound2() {
   S.round=2; S.phase='lesson';
   S.sessionId=`${S.student.grade}-${S.student.classNum}-${S.student.number}-${S.student.name}-R2-${Date.now()}`;
   S.sessionStart=Date.now();
-  S.history=[]; S.turns=[]; S.studentTurnCount=0;
+  S.history=[]; S.turns=[]; S.studentTurnCount=0; S.lessonHistory=[];
   document.getElementById('messages').innerHTML='';
   showScreen('chatScreen');
   updatePhaseUI();
@@ -1143,7 +1148,7 @@ function beginFreetalk() {
   S.phase='free'; S.round='free';
   S.sessionId=`${S.student.grade}-${S.student.classNum}-${S.student.number}-${S.student.name}-FREE-${Date.now()}`;
   S.sessionStart=Date.now();
-  S.history=[]; S.turns=[]; S.studentTurnCount=0;
+  S.history=[]; S.turns=[]; S.studentTurnCount=0; S.lessonHistory=[];
   document.getElementById('messages').innerHTML='';
   showScreen('chatScreen');
   updatePhaseUI();

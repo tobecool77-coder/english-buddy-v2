@@ -1,18 +1,18 @@
 // pages/api/chat.js
 
 const LESSON_INFO = {
-  '6-1':  { expr: 'What grade are you in? / I\'m in the [ordinal] grade.', alexAnswers: ["I'm in the fifth grade.", "I'm in the fourth grade.", "I'm in the sixth grade.", "I'm in the third grade."] },
-  '6-2':  { expr: 'What season do you like? / I like [season].', alexAnswers: ["I like spring.", "I like summer.", "I like fall.", "I like winter."] },
-  '6-3':  { expr: 'When is your birthday? / It\'s on [month] [day].', alexAnswers: ["My birthday is on March 10th.", "My birthday is on June 5th.", "My birthday is on November 20th.", "My birthday is on August 3rd."] },
-  '6-4':  { expr: 'Why are you happy? / Because [reason].', alexAnswers: ["Because I got a perfect score.", "Because I got new shoes.", "Because it's sunny today.", "Because I watched a fun movie."] },
-  '6-5':  { expr: 'Where is [place]? / Go straight. Turn left/right.', alexAnswers: ["Go straight and turn left.", "It's next to the bank.", "Go straight two blocks and turn right.", "It's across from the school."] },
-  '6-6':  { expr: 'What does she look like? / She has [hair]. She is wearing [clothes].', alexAnswers: ["She has short black hair.", "He has curly brown hair.", "She is wearing a red jacket.", "He is tall and has glasses."] },
-  '6-7':  { expr: 'Can you come to [event]? / Sure, I can! / Sorry, I can\'t.', alexAnswers: ["Sure, I can come!", "Sorry, I can't come.", "It's on September 29th.", "It's on October 5th."] },
-  '6-8':  { expr: '[A] is [adj]-er than [B].', alexAnswers: ["The elephant is bigger than the dog.", "The cheetah is faster than the horse.", "The mountain is taller than the building.", "The rock is heavier than the ball."] },
-  '6-9':  { expr: 'What are you going to do? / I\'m going to [verb].', alexAnswers: ["I'm going to go camping.", "I'm going to visit my grandma.", "I'm going to play soccer.", "I'm going to read a book."] },
-  '6-10': { expr: 'How often do you [verb]? / I [verb] [frequency].', alexAnswers: ["I eat vegetables every day.", "I exercise twice a week.", "I brush my teeth three times a day.", "I drink milk once a day."] },
-  '6-11': { expr: 'Do you know anything about [topic]? / Yes! It\'s [description].', alexAnswers: ["Yes! It's a Korean arrow-throwing game.", "No, I don't know.", "Yes! It's an Australian flying toy.", "Yes! It's a traditional Korean game."] },
-  '6-12': { expr: 'We made a class album. / I made [object].', alexAnswers: ["I made a photo book.", "I drew some pictures.", "I wrote a poem.", "I made a short video."] },
+  '6-1':  { expr: 'What grade are you in? / I\'m in the [ordinal] grade.', questions: ['What grade are you in?'], alexAnswers: ["I'm in the fifth grade.", "I'm in the fourth grade.", "I'm in the sixth grade.", "I'm in the third grade."] },
+  '6-2':  { expr: 'What season do you like? / I like [season].', questions: ['What season do you like?'], alexAnswers: ["I like spring.", "I like summer.", "I like fall.", "I like winter."] },
+  '6-3':  { expr: 'When is your birthday? / It\'s on [month] [day].', questions: ['When is your birthday?'], alexAnswers: ["My birthday is on March 10th.", "My birthday is on June 5th.", "My birthday is on November 20th.", "My birthday is on August 3rd."] },
+  '6-4':  { expr: 'Why are you happy? / Because [reason].', questions: ['Why are you happy?', 'Why are you excited?'], alexAnswers: ["Because I got a perfect score.", "Because I got new shoes.", "Because it's sunny today.", "Because I watched a fun movie."] },
+  '6-5':  { expr: 'Where is [place]? / Go straight. Turn left/right.', questions: ['Where is the library?', 'Where is the school?'], alexAnswers: ["Go straight and turn left.", "It's next to the bank.", "Go straight two blocks and turn right.", "It's across from the school."] },
+  '6-6':  { expr: 'What does she look like? / She has [hair]. She is wearing [clothes].', questions: ['What does she look like?', 'What does he look like?'], alexAnswers: ["She has short black hair.", "He has curly brown hair.", "She is wearing a red jacket.", "He is tall and has glasses."] },
+  '6-7':  { expr: 'Can you come to [event]? / Sure, I can! / Sorry, I can\'t.', questions: ['Can you come to my party?', 'When is the festival?'], alexAnswers: ["Sure, I can come!", "Sorry, I can't come.", "It's on September 29th.", "It's on October 5th."] },
+  '6-8':  { expr: '[A] is [adj]-er than [B].', questions: ['What is bigger than a dog?', 'What is faster than a bike?'], alexAnswers: ["The elephant is bigger than the dog.", "The cheetah is faster than the horse.", "The mountain is taller than the building.", "The rock is heavier than the ball."] },
+  '6-9':  { expr: 'What are you going to do? / I\'m going to [verb].', questions: ['What are you going to do?', 'What are you going to do this weekend?'], alexAnswers: ["I'm going to go camping.", "I'm going to visit my grandma.", "I'm going to play soccer.", "I'm going to read a book."] },
+  '6-10': { expr: 'How often do you [verb]? / I [verb] [frequency].', questions: ['How often do you eat vegetables?', 'How often do you exercise?'], alexAnswers: ["I eat vegetables every day.", "I exercise twice a week.", "I brush my teeth three times a day.", "I drink milk once a day."] },
+  '6-11': { expr: 'Do you know anything about [topic]? / Yes! It\'s [description].', questions: ['Do you know anything about Tuho?', 'Do you know anything about Yut?'], alexAnswers: ["Yes! It's a Korean arrow-throwing game.", "No, I don't know.", "Yes! It's an Australian flying toy.", "Yes! It's a traditional Korean game."] },
+  '6-12': { expr: 'We made a class album. / I made [object].', questions: ['What did you make?', 'What did you put in the album?'], alexAnswers: ["I made a photo book.", "I drew some pictures.", "I wrote a poem.", "I made a short video."] },
 };
 
 function getSystemInstruction(phase, lessonKey, lessonTitle) {
@@ -162,78 +162,30 @@ Rules:
     }
   }
 
+  // ── LESSON: history 기반 코드 로직 ──────────────────────────────────────
   try {
-    const systemInstruction = getSystemInstruction(phase || 'lesson', lessonKey, lessonTitle);
+    const info = LESSON_INFO[lessonKey];
+    if (!info) return res.status(200).json({ success: true, text: "Let's practice! What did you learn?" });
 
-    // Gemini API - systemInstruction 필드 분리 사용 (더 안정적)
-    const messages = conversationHistory.map(t => ({
-      role: t.speaker === 'AI' ? 'model' : 'user',
-      parts: [{ text: t.text }]
-    }));
+    const lastAlex = [...conversationHistory].reverse().find(t => t.speaker === 'AI')?.text || '';
+    const lastStudent = [...conversationHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
+    const studentTurns = conversationHistory.filter(t => t.speaker === 'STUDENT').length;
 
-    // 대화가 없으면 빈 user 메시지 추가 (Gemini 요구사항)
-    if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
-      messages.push({ role: 'user', parts: [{ text: '(start)' }] });
+    const correction = detectGrammarError(lastStudent, lessonKey);
+    const justSaidNowAskMe = lastAlex.includes('Now ask me');
+
+    let response;
+    if (justSaidNowAskMe) {
+      const myAnswer = info.alexAnswers[studentTurns % info.alexAnswers.length];
+      const question = info.questions[studentTurns % info.questions.length];
+      response = `${myAnswer} ${question}`;
+    } else {
+      const reactions = ['Oh!', 'Cool.', 'Nice.', 'Really?', 'Me too!', 'I see.'];
+      const reaction = reactions[studentTurns % reactions.length];
+      response = correction ? `${correction} Now ask me!` : `${reaction} Now ask me!`;
     }
 
-    const body = {
-      system_instruction: { parts: [{ text: systemInstruction }] },
-      contents: messages,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 150,
-        topP: 0.9,
-        stopSequences: ['\n\n'],  // 불필요한 긴 출력 방지
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_LOW_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_LOW_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
-      ],
-    };
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Gemini API error:', response.status, errText);
-      return res.status(200).json({ success: false, text: "Sorry, can you try again?" });
-    }
-
-    const data = await response.json();
-
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let text = data.candidates[0].content.parts[0].text.trim();
-      // 이모지 제거
-      text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-      // 불완전한 문장 체크 (마침표/물음표/느낌표로 끝나지 않으면 fallback)
-      if (text.length < 5 || (!text.match(/[.!?]$/) && text.length < 20)) {
-        console.warn('Incomplete response:', text);
-        const info = LESSON_INFO[lessonKey];
-        const alexAnswer = info ? info.alexAnswers[Math.floor(Math.random() * info.alexAnswers.length)] : "I'm doing great.";
-        const fallbacks = {
-          lesson: `Now ask me! ${alexAnswer}`,
-          smalltalk: "Me too! What's your favorite food?",
-          free: "Oh really! What else do you like?",
-        };
-        return res.status(200).json({ success: true, text: fallbacks[phase] || fallbacks.lesson });
-      }
-      return res.status(200).json({ success: true, text });
-    }
-
-    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-      return res.status(200).json({ success: true, text: "I cannot understand that. Please try again." });
-    }
-
-    return res.status(200).json({ success: false, text: "Sorry, can you try again?" });
+    return res.status(200).json({ success: true, text: response });
 
   } catch (e) {
     console.error('Chat handler error:', e);

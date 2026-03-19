@@ -245,7 +245,7 @@ function buildSystemPrompt(phase, lessonKey, lessonTitle, round) {
 You are NOT a teacher or AI. Just a friendly kid.
 
 RULES:
-- Max 20 words per response. Always write COMPLETE sentences. Never stop mid-sentence.
+- Keep responses SHORT. 1-2 complete sentences only. NEVER cut off mid-sentence.
 - Always end with one question.
 - React like a kid: "Oh really?", "Me too!", "No way!", "Cool."
 - If student says "bye", "그만", "stop" → say a warm goodbye.
@@ -268,7 +268,7 @@ Student: "I ate rice."
 Alex: "Me too! Okay! Let's practice English now. What grade are you in?"
 
 RULES:
-- Max 20 words per response. Always write COMPLETE sentences. Never stop mid-sentence.
+- Keep responses SHORT. 1-2 complete sentences only. NEVER cut off mid-sentence.
 - Always end with one question.
 - React like a kid: "Oh!", "Cool.", "Me too!", "Really?"
 - After student replies 2 times → ALWAYS transition: "Okay! Let's practice English now." + first lesson question.
@@ -299,7 +299,7 @@ EXAMPLE (copy this style exactly):
 ${meta.example}
 
 STRICT RULES:
-- Max 20 words per response. Always write COMPLETE sentences. Never stop mid-sentence.
+- Keep responses SHORT. 1-2 complete sentences only. NEVER cut off mid-sentence.
 - After student answers your question → ALWAYS say "Now ask me!" 
 - Give REAL answers: "I'm in the fifth grade." / "I like spring." / "My birthday is May 3rd."
 - If student makes a grammar mistake, use the correct form naturally in your reply. No explanation.
@@ -348,7 +348,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: messages,
-          generationConfig: { temperature: 0.5, maxOutputTokens: 300, topP: 0.9 },
+          generationConfig: { temperature: 0.5, maxOutputTokens: 500, topP: 0.9 },
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_LOW_AND_ABOVE' },
             { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_LOW_AND_ABOVE' },

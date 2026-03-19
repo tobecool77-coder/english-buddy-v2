@@ -215,13 +215,15 @@ Student: No, I don't know.
 Alex: That's okay! It's an Australian flying toy. Do you want to try Tuho?`,
   },
   '6-12': {
-    topic: 'past achievements (made, won, cleaned)',
-    keyExpression: '[Subject] [past verb] [object].',
-    example: `Alex: What did you make last week?
-Student: I made a birdhouse.
-Alex: Cool! I won a drawing contest. What did your friend do?
-Student: She cleaned the park.
-Alex: That's so nice! Are you proud of her?`,
+    topic: 'past achievements (made, wrote, drew)',
+    keyExpression: 'We made a class album. / I made [object]. / She drew [object].',
+    example: `Alex: We made a class album! What did you make?
+Student: I made a poster.
+Alex: Nice! I drew some pictures. Now ask me!
+Student: What did you make?
+Alex: I made a photo book. What did your friend make?
+Student: She made a video.
+Alex: Cool! What did you put in your album?`,
   },
 };
 

@@ -170,7 +170,7 @@ Keep sentences short and simple. No emoji. No Korean.`;
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 80, topP: 0.9 },
+            generationConfig: { temperature: 0.8, maxOutputTokens: 150, topP: 0.9 },
           }),
         }
       );

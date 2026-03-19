@@ -311,7 +311,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Nunito',
   <div class="timer-bar" id="timerBar">
     <span class="timer-label" id="timerLabel">연습 시간</span>
     <div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
-    <span class="timer-num" id="timerNum">2:00</span>
+    <span class="timer-num" id="timerNum">1:30</span>
   </div>
   <div class="phase-banner" id="phaseBanner"></div>
   <div class="messages" id="messages"></div>
@@ -737,7 +737,7 @@ function updateTimerDisplay() {
   document.getElementById('timerNum').textContent = `${m}:${s.toString().padStart(2,'0')}`;
   const pct = Math.max(0, (S.lessonTimerSec / S.lessonTimerTotal) * 100);
   document.getElementById('timerFill').style.width = pct + '%';
-  const label = S.round === 1 ? `연습 시간 · Round ${S.round} (2분)` : `연습 시간 · Round ${S.round} (2분)`;
+  const label = S.round === 1 ? `연습 시간 · Round ${S.round} (1분 30초)` : `연습 시간 · Round ${S.round} (1분 30초)`;
   document.getElementById('timerLabel').textContent = label;
 }
 
@@ -1044,7 +1044,7 @@ async function handleStudentSpeech(text) {
     setTimeout(finishFreetalk, 2800);
     return;
   }
-  aiSpeak(result.success ? result.text : "Great! Can you say that again?");
+  aiSpeak(result.success ? result.text : "Oh! Now ask me!");
 }
 
 function switchToLesson() {
@@ -1128,14 +1128,18 @@ async function finishRound() {
     endTime:new Date(endTime).toISOString(), durationSec,
   };
 
-  showScreen('comicLoadingScreen');
-  const [comicResult] = await Promise.all([
-    callComic(S.lessonHistory.length >= 4 ? S.lessonHistory : S.history, S.student.name),
-    callSave('session',{sessionSummary:summary, turns:S.turns, round:S.round}),
-  ]);
-
-  if (S.round===1) showComicR1(comicResult.success?comicResult.comicData:null);
-  else showComicR2Done(comicResult.success?comicResult.comicData:null);
+  if (S.round===1) {
+    showScreen('comicLoadingScreen');
+    const [comicResult] = await Promise.all([
+      callComic(S.lessonHistory.length >= 4 ? S.lessonHistory : S.history, S.student.name),
+      callSave('session',{sessionSummary:summary, turns:S.turns, round:S.round}),
+    ]);
+    showComicR1(comicResult.success?comicResult.comicData:null);
+  } else {
+    // Round 2 끝 → 만화 없이 바로 자유토크
+    callSave('session',{sessionSummary:summary, turns:S.turns, round:S.round});
+    beginFreetalk();
+  }
 }
 
 function startRound2() {

@@ -616,6 +616,7 @@ const S = {
   sessionId:'', sessionStart:0,
   history:[], turns:[], studentTurnCount:0,
   aiThinking:false,
+  isSpeaking:false,
   recognition:null, recActive:false, gotFinal:false,
   scaffoldTimer:null, aiSpokeAt:0, micPressedAt:0, speechStartAt:0,
   lessonTimer:null, lessonTimerSec:0, lessonTimerTotal:0,
@@ -829,6 +830,7 @@ function bestTranscript(result) {
 
 function toggleMic() {
   if (S.aiThinking) return;
+  if (S.isSpeaking) return;  // TTS 말하는 중엔 무시
   if (S.recActive) {
     stopListening();
   } else {
@@ -908,7 +910,11 @@ function speak(text) {
   window.speechSynthesis.cancel();
   const clean = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F000}-\u{1FFFF}]/gu,'').trim();
   if (!clean) return;
-  // Android: cancel() 직후 speak() → 무음 발생. 80ms 딜레이
+
+  // TTS 말하는 동안 마이크 완전 차단
+  stopListening();
+  destroySpeech();
+
   setTimeout(() => {
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     const u = new SpeechSynthesisUtterance(clean);
@@ -918,6 +924,15 @@ function speak(text) {
            || voices.find(v => v.lang.startsWith('en-US'))
            || voices.find(v => v.lang.startsWith('en'));
     if (v) u.voice = v;
+
+    // TTS 끝나면 마이크 다시 준비 (STT가 TTS를 듣는 것 방지)
+    u.onend = () => {
+      S.isSpeaking = false;
+    };
+    u.onerror = () => {
+      S.isSpeaking = false;
+    };
+    S.isSpeaking = true;
     window.speechSynthesis.speak(u);
   }, 80);
 }
@@ -926,17 +941,21 @@ function speak(text) {
 //  AI SPEAK
 // ═══════════════════════════════════════════════
 function aiSpeak(text, phaseOverride) {
-  S.aiThinking=false;
-  S.aiSpokeAt=Date.now();
+  S.aiThinking = false;
+  S.aiSpokeAt = Date.now();
   addMessage('AI', text);
   S.history.push({speaker:'AI', text, timestamp:Date.now()});
   S.turns.push({turnNumber:S.turns.length+1, speaker:'AI', text, timestamp:Date.now()});
   speak(text);
-  setTimeout(()=>{
+
+  // TTS 길이 추정 (영어 평균 발화속도 기준) + 여유 500ms
+  const estimatedMs = Math.max(1500, (text.length / 12) * 1000 * (1 / 0.85) + 500);
+  setTimeout(() => {
+    S.isSpeaking = false;
     setMicUI('idle');
-    document.getElementById('voiceHint').textContent='마이크를 눌러 대답해 보세요!';
-    if (S.phase==='lesson') startScaffold();
-  }, 1400);
+    document.getElementById('voiceHint').textContent = '마이크를 눌러 대답해 보세요!';
+    if (S.phase === 'lesson') startScaffold();
+  }, estimatedMs);
 }
 
 // ═══════════════════════════════════════════════

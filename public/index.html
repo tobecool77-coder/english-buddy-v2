@@ -406,6 +406,21 @@ const LESSON_OPENERS = {
   '6-12': "Let's practice today's lesson! What did you make for the class album?",
 };
 
+const LESSON_OPENERS_R2 = {
+  '6-1':  "Let's practice again! What grade are you in?",
+  '6-2':  "Let's practice again! What season do you like?",
+  '6-3':  "Let's practice again! When is your birthday?",
+  '6-4':  "Let's practice again! Why are you happy?",
+  '6-5':  "Let's practice again! Where is the library?",
+  '6-6':  "Let's practice again! What does she look like?",
+  '6-7':  "Let's practice again! Can you come to my party?",
+  '6-8':  "Let's practice again! Is an elephant bigger than a horse?",
+  '6-9':  "Let's practice again! What are you going to do this weekend?",
+  '6-10': "Let's practice again! How often do you eat vegetables?",
+  '6-11': "Let's practice again! Do you know anything about Tuho?",
+  '6-12': "Let's practice again! What did you make for the class album?",
+};
+
 // 배경별 색상 팔레트
 const SETTING_PALETTE = {
   classroom: { sky:'#E3F2FD', ground:'#C8E6C9', wall:'#BBDEFB', accent:'#90CAF9' },
@@ -1121,7 +1136,7 @@ function startRound2() {
   showScreen('chatScreen');
   updatePhaseUI();
   initSpeech();
-  const opener = LESSON_OPENERS[S.lessonKey] || "Let's practice again!";
+  const opener = LESSON_OPENERS_R2[S.lessonKey] || "Let's practice again! What grade are you in?";
   setTimeout(()=>aiSpeak(opener), 600);
 }
 

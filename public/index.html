@@ -907,14 +907,16 @@ function clearScaffold() {
 // ═══════════════════════════════════════════════
 function speak(text) {
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
   const clean = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F000}-\u{1FFFF}]/gu,'').trim();
   if (!clean) return;
 
-  // TTS 말하는 동안 마이크 완전 차단
+  // 기존 TTS 중단 + 마이크 차단
+  window.speechSynthesis.cancel();
   stopListening();
   destroySpeech();
+  S.isSpeaking = true;
 
+  // Android: cancel() 직후 speak() 실패 방지 — 150ms 딜레이
   setTimeout(() => {
     if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     const u = new SpeechSynthesisUtterance(clean);
@@ -924,17 +926,10 @@ function speak(text) {
            || voices.find(v => v.lang.startsWith('en-US'))
            || voices.find(v => v.lang.startsWith('en'));
     if (v) u.voice = v;
-
-    // TTS 끝나면 마이크 다시 준비 (STT가 TTS를 듣는 것 방지)
-    u.onend = () => {
-      S.isSpeaking = false;
-    };
-    u.onerror = () => {
-      S.isSpeaking = false;
-    };
-    S.isSpeaking = true;
+    u.onend = () => { S.isSpeaking = false; };
+    u.onerror = () => { S.isSpeaking = false; };
     window.speechSynthesis.speak(u);
-  }, 80);
+  }, 150);
 }
 
 // ═══════════════════════════════════════════════
@@ -948,8 +943,8 @@ function aiSpeak(text, phaseOverride) {
   S.turns.push({turnNumber:S.turns.length+1, speaker:'AI', text, timestamp:Date.now()});
   speak(text);
 
-  // TTS 길이 추정 (영어 평균 발화속도 기준) + 여유 500ms
-  const estimatedMs = Math.max(1500, (text.length / 12) * 1000 * (1 / 0.85) + 500);
+  // TTS 길이 추정 + 잔향 대기 1500ms 추가 (갤탭 스피커 잔향이 마이크에 잡히는 것 방지)
+  const estimatedMs = Math.max(2500, (text.length / 12) * 1000 * (1 / 0.85) + 1500);
   setTimeout(() => {
     S.isSpeaking = false;
     setMicUI('idle');

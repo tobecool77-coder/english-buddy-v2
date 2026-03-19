@@ -88,6 +88,56 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, text: "I cannot understand that. Please try again." });
   }
 
+  // ── FREE TALK: 별도 처리 ─────────────────────────────────────────────────
+  if (phase === 'free') {
+    const messages = conversationHistory.map(t => ({
+      role: t.speaker === 'AI' ? 'model' : 'user',
+      parts: [{ text: t.text }]
+    }));
+    if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
+      messages.push({ role: 'user', parts: [{ text: '(start)' }] });
+    }
+    const freeSystem = `You are Alex, a cheerful Korean elementary school student (age 11-12) having a free conversation in English.
+You are a STUDENT, not a teacher or AI.
+
+Rules:
+- Write exactly 2 complete sentences. NEVER cut off mid-sentence.
+- Always end with ONE question that is DIFFERENT from any previous question in the conversation.
+- Vary topics: food, sports, animals, school, hobbies, family, weather, movies, games, travel.
+- React like a real kid: "Me too!", "No way!", "Really?", "I love that!", "Same here!", "Oh nice!"
+- If student says bye/그만/stop → say a warm goodbye in 1 sentence.
+- No emoji. No Korean.`;
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: freeSystem }] },
+            contents: messages,
+            generationConfig: { temperature: 0.9, maxOutputTokens: 120, topP: 0.95 },
+          }),
+        }
+      );
+      const d = await resp.json();
+      let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+      text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
+      if (!text || text.length < 5 || !text.match(/[.!?]$/)) {
+        const freeFallbacks = [
+          "Me too! What's your favorite sport?",
+          "Oh nice! Do you have any pets?",
+          "Really? What do you do on weekends?",
+          "Same here! What's your favorite subject?",
+        ];
+        text = freeFallbacks[Math.floor(Math.random() * freeFallbacks.length)];
+      }
+      return res.status(200).json({ success: true, text });
+    } catch(e) {
+      return res.status(200).json({ success: true, text: "Me too! What's your favorite sport?" });
+    }
+  }
+
   // 스몰톡: 2번 후 레슨 전환
   if (phase === 'smalltalk') {
     const studentTurns = conversationHistory.filter(t => t.speaker === 'STUDENT').length;

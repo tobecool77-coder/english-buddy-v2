@@ -128,38 +128,20 @@ export default async function handler(req, res) {
     if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
       messages.push({ role: 'user', parts: [{ text: '(continue)' }] });
     }
-    // 직전 학생 발화 추출
     const lastStudentText = [...recentHistory].reverse().find(t => t.speaker === 'STUDENT')?.text || '';
-    const lastAlexText = [...recentHistory].reverse().find(t => t.speaker === 'AI')?.text || '';
-    const prevQuestion = lastAlexText.match(/[^.!?]*\?/)?.[0]?.trim() || '';
-    const turnCount = recentHistory.filter(t => t.speaker === 'STUDENT').length;
 
-    const freeSystem = `You are Alex, a Korean elementary school student (age 11-12) talking with a classmate.
-You are having a REAL conversation, not a quiz or interview.
+    const freeSystem = `You are Alex, an 11-year-old Korean student talking with a classmate in English.
+Just have a normal friendly chat. Use very simple English that a 10-12 year old can understand.
 
 The student just said: "${lastStudentText}"
 
-YOUR RESPONSE MUST follow this structure:
-Sentence 1: React to what the student said. Show you listened. Use their exact words.
-  - "Oh, you like pizza!"
-  - "Wow, you have a dog!"
-  - "Soccer is so fun!"
-  - "Mathematics is hard for me."
-  - "Sierra sounds so cool!"
-
-Sentence 2 (choose ONE based on turn number ${turnCount}):
-  - If turn is ODD: Share something about YOURSELF related to the topic.
-    "I love pizza too, especially with cheese."
-    "My dog is named Coco."
-    "I play soccer every Saturday."
-  - If turn is EVEN: Ask ONE short question related to what they said.
-    "What is your favorite pizza topping?"
-    "What is your dog's name?"
-    "What position do you play?"
-
-NEVER say: "${prevQuestion || 'nothing'}"
-NEVER ignore what the student said and change the topic completely.
-Keep sentences short and simple. No emoji. No Korean.`;
+Talk like a real kid:
+- React to what they said
+- Share your own thoughts or experience  
+- Sometimes ask something, sometimes just chat
+- Keep it short: 2-3 sentences max
+- Use words like: cool, fun, nice, wow, really, me too, same, I like, I have, I went, I want
+- No emoji. No Korean.`;
 
     try {
       const resp = await fetch(
@@ -170,7 +152,7 @@ Keep sentences short and simple. No emoji. No Korean.`;
           body: JSON.stringify({
             system_instruction: { parts: [{ text: freeSystem }] },
             contents: messages,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 150, topP: 0.9 },
+            generationConfig: { temperature: 0.9, maxOutputTokens: 150, topP: 0.95 },
           }),
         }
       );
@@ -178,15 +160,11 @@ Keep sentences short and simple. No emoji. No Korean.`;
       let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
       if (!text || text.length < 5) {
-        // fallback도 학생 말에 반응하게
-        const word = lastStudentText.split(' ').slice(-1)[0] || 'that';
-        text = turnCount % 2 === 0
-          ? `Oh, ${word}! I like that too.`
-          : `Really? Tell me more about ${word}!`;
+        text = "Oh really! That is so cool. I want to try that too!";
       }
       return res.status(200).json({ success: true, text });
     } catch(e) {
-      return res.status(200).json({ success: true, text: "Oh really! That sounds cool." });
+      return res.status(200).json({ success: true, text: "Oh nice! Tell me more about it." });
     }
   }
   // 스몰톡: 2번 후 레슨 전환

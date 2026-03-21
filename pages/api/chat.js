@@ -151,17 +151,39 @@ export default async function handler(req, res) {
       );
       const d = await resp.json();
       let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-      // 에러 상세 로깅
       if (!text) console.error('Free talk empty response:', JSON.stringify(d).slice(0, 300));
       text = text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
+
+      // 응답이 잘렸으면 (문장 부호로 안 끝남) 재시도
+      const isComplete = text.length > 5 && /[.!?]$/.test(text);
+      if (!isComplete) {
+        const resp2 = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                { role: 'user', parts: [{ text: 'You are Alex, an 11-year-old Korean student. Reply in 1 complete sentence. Simple English. No emoji. No Korean.' }] },
+                { role: 'model', parts: [{ text: 'Ok!' }] },
+                { role: 'user', parts: [{ text: lastStudentText || 'hi' }] },
+              ],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 50 },
+            }),
+          }
+        );
+        const d2 = await resp2.json();
+        const text2 = d2.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+        if (text2 && text2.length > 5) text = text2.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,'').trim();
+      }
+
+      // 그래도 없으면 키워드 기반 fallback
       if (!text || text.length < 5) {
-        // fallback도 학생 말 반영
-        const w = lastStudentText.split(' ').slice(-2).join(' ') || 'that';
+        const word = lastStudentText.split(' ').find(w => w.length > 3) || 'that';
         const fallbacks = [
-          `Oh, ${w}! Me too!`,
-          `Really? I like ${w} too.`,
-          `Wow, ${w} sounds fun!`,
-          `Cool! I want to try ${w}.`,
+          `Oh, I like ${word} too!`,
+          `Really? ${word} is so fun!`,
+          `Me too! I love ${word}.`,
         ];
         text = fallbacks[Math.floor(Math.random() * fallbacks.length)];
       }

@@ -139,7 +139,7 @@ export default async function handler(req, res) {
 
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -147,7 +147,7 @@ export default async function handler(req, res) {
             contents: allMessages,
             generationConfig: {
               temperature: 0.9,
-              maxOutputTokens: 300,
+              maxOutputTokens: 8192,
               topP: 0.95,
             },
           }),
@@ -162,7 +162,7 @@ export default async function handler(req, res) {
       const isComplete = text.length > 5 && /[.!?]$/.test(text);
       if (!isComplete) {
         const resp2 = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -679,6 +679,13 @@ function startSession() {
   S.history = []; S.turns = []; S.studentTurnCount = 0;
   S.lessonHistory = [];
 
+  // 모바일 TTS unlock — 사용자 버튼 클릭 시점에 실행
+  if (window.speechSynthesis) {
+    const unlock = new SpeechSynthesisUtterance('');
+    unlock.volume = 0;
+    window.speechSynthesis.speak(unlock);
+  }
+
   showScreen('chatScreen');
   updatePhaseUI();
   document.getElementById('endFreeBtn').classList.remove('show');
@@ -863,30 +870,39 @@ function toggleMic() {
 }
 
 function startListening() {
-  // Android: 매번 새 인스턴스 생성 — 재사용 시 InvalidStateError 발생
-  destroySpeech();
-  initSpeech();
-  if (!S.recognition) return;
-
-  // Android Chrome: 직후 start() 호출 시 실패 → 100ms 딜레이
-  setTimeout(() => {
+  if (!S.recognition) {
+    initSpeech();
     if (!S.recognition) return;
+  }
+  // 이미 실행 중이면 중단 후 재시작
+  if (S.recActive) {
+    try { S.recognition.stop(); } catch(e) {}
+    setTimeout(() => _doStart(), 200);
+    return;
+  }
+  _doStart();
+}
+
+function _doStart() {
+  if (!S.recognition) { initSpeech(); }
+  setTimeout(() => {
     try {
       S.recognition.start();
     } catch(e) {
-      console.warn('[STT start failed]', e.message);
-      // 한 번만 재시도
-      destroySpeech();
-      initSpeech();
-      setTimeout(() => {
-        try { S.recognition.start(); }
-        catch(e2) {
-          setMicUI('idle');
-          document.getElementById('voiceHint').textContent = '마이크 시작 실패. 다시 눌러보세요!';
-        }
-      }, 300);
+      // InvalidStateError 등 → 새 인스턴스로 재시도
+      if (e.name === 'InvalidStateError' || e.name === 'NotSupportedError') {
+        destroySpeech();
+        initSpeech();
+        setTimeout(() => {
+          try { S.recognition.start(); }
+          catch(e2) {
+            setMicUI('idle');
+            document.getElementById('voiceHint').textContent = '다시 눌러보세요!';
+          }
+        }, 200);
+      }
     }
-  }, 100);
+  }, 80);
 }
 
 function stopListening() {

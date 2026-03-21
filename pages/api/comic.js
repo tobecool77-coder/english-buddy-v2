@@ -17,59 +17,90 @@ export default async function handler(req, res) {
     `${t.speaker === 'AI' ? 'Alex' : sName}: ${t.text}`
   ).join('\n');
 
-  const prompt = `Create a 4-panel comic strip based on this conversation. Use the actual words.
-
-Conversation:
-${dialogText}
-
-Return ONLY valid JSON. No markdown. No extra text.
-Format: {"title":"short title","panels":[{"panel":1,"setting":"classroom","alexSays":"text max 8 words","studentSays":"text max 8 words","alexEmotion":"happy","studentEmotion":"happy"},{"panel":2,"setting":"playground","alexSays":"text","studentSays":"text","alexEmotion":"excited","studentEmotion":"thinking"},{"panel":3,"setting":"park","alexSays":"text","studentSays":"text","alexEmotion":"proud","studentEmotion":"happy"},{"panel":4,"setting":"classroom","alexSays":"Great job!","studentSays":"Thank you!","alexEmotion":"excited","studentEmotion":"happy"}]}`;
-
   try {
-    const response = await fetch(
+    // Step 1: 대화 내용으로 4컷 장면 묘사 생성
+    const sceneResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          contents: [{ role: 'user', parts: [{ text: `Based on this English conversation between Alex (a friendly robot) and ${sName} (a Korean elementary student), create 4 comic panel scene descriptions.
+
+Conversation:
+${dialogText}
+
+For each panel, write a short image generation prompt describing the scene visually.
+Make it cute, colorful, child-friendly Korean webtoon style.
+Include what the characters are doing and their expressions.
+
+Return JSON only:
+{"title":"fun title","panels":[
+{"panel":1,"scene":"cute cartoon robot Alex and student in classroom, Alex asking question, both smiling, bright colors, webtoon style"},
+{"panel":2,"scene":"..."},
+{"panel":3,"scene":"..."},
+{"panel":4,"scene":"..."}
+]}` }] }],
           generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 1000,
-            responseMimeType: "application/json",
+            temperature: 0.7,
+            maxOutputTokens: 500,
+            responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       }
     );
 
-    if (!response.ok) {
-      console.error('Comic API error:', response.status);
-      return res.status(200).json({ success: false });
-    }
+    if (!sceneResp.ok) throw new Error(`Scene gen failed: ${sceneResp.status}`);
+    const sceneData = await sceneResp.json();
+    const sceneText = sceneData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const scenes = JSON.parse(sceneText);
 
-    const data = await response.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    const comicData = JSON.parse(clean);
-    return res.status(200).json({ success: true, comicData });
-
-  } catch (e) {
-    console.error('Comic handler error:', e);
-    const panels = [1,2,3,4].map(i => {
-      const aiTurns = slice.filter(t => t.speaker === 'AI');
-      const stTurns = slice.filter(t => t.speaker === 'STUDENT');
-      return {
-        panel: i,
-        setting: ['classroom','playground','park','library'][i-1],
-        alexSays: (aiTurns[i-1]?.text || 'Good job!').slice(0, 50),
-        studentSays: (stTurns[i-1]?.text || 'Thank you!').slice(0, 50),
-        alexEmotion: 'happy',
-        studentEmotion: 'happy',
-      };
+    // Step 2: 각 장면을 이미지로 생성
+    const imagePromises = scenes.panels.map(async (panel) => {
+      const imgResp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: `${panel.scene}, comic panel style, cute cartoon, bright cheerful colors, no text in image` }] }],
+            generationConfig: {
+              responseModalities: ['IMAGE'],
+              temperature: 0.7,
+            },
+          }),
+        }
+      );
+      if (!imgResp.ok) {
+        console.error('Image gen failed:', imgResp.status);
+        return null;
+      }
+      const imgData = await imgResp.json();
+      const imagePart = imgData.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+      return imagePart ? `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` : null;
     });
+
+    const images = await Promise.all(imagePromises);
+
+    // 이미지와 함께 패널 데이터 반환
+    const panels = scenes.panels.map((panel, i) => ({
+      panel: panel.panel,
+      imageData: images[i],
+      scene: panel.scene,
+    }));
+
     return res.status(200).json({
       success: true,
-      comicData: { title: `${sName}'s English Practice`, panels }
+      comicData: {
+        title: scenes.title,
+        panels,
+        isImageComic: true,
+      }
     });
+
+  } catch (e) {
+    console.error('Comic handler error:', e.message);
+    return res.status(200).json({ success: false, error: e.message });
   }
 }

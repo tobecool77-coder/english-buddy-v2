@@ -129,7 +129,7 @@ export default async function handler(req, res) {
 
     // system_instruction 대신 대화 맨 앞에 삽입 (v1beta 호환)
     const allMessages = [
-      { role: 'user', parts: [{ text: 'You are Alex, an 11-year-old Korean student. Chat naturally in simple English. React to what I say. 1-2 short sentences only. No emoji. No Korean.' }] },
+      { role: 'user', parts: [{ text: 'You are Alex, an 11-year-old Korean student. Reply with exactly 1-2 COMPLETE sentences that end with . or ! or ?. Never stop mid-sentence. Simple English only. No emoji. No Korean.' }] },
       { role: 'model', parts: [{ text: "Ok!" }] },
       ...messages,
     ];
@@ -139,13 +139,17 @@ export default async function handler(req, res) {
 
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: allMessages,
-            generationConfig: { temperature: 0.9, maxOutputTokens: 80, topP: 0.95 },
+            generationConfig: {
+              temperature: 0.9,
+              maxOutputTokens: 300,
+              topP: 0.95,
+            },
           }),
         }
       );

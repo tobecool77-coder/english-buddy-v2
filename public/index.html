@@ -1238,22 +1238,39 @@ function renderPanels(comicData) {
   const grid = document.getElementById('comicGrid');
   grid.innerHTML = '';
   if (!comicData?.panels) return;
-  const studentName = S.student?.name || 'You';
 
+  // 이미지 생성 만화
+  if (comicData.isImageComic) {
+    comicData.panels.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'comic-panel';
+      if (p.imageData) {
+        el.innerHTML = `
+          <div class="panel-header"><span>Scene ${i+1}</span></div>
+          <img src="${p.imageData}" style="width:100%;display:block;border-radius:0 0 12px 12px" alt="Scene ${i+1}"/>`;
+      } else {
+        el.innerHTML = `
+          <div class="panel-header"><span>Scene ${i+1}</span></div>
+          <div style="padding:20px;text-align:center;color:#999;font-size:.8rem">${p.scene || 'Scene ' + (i+1)}</div>`;
+      }
+      grid.appendChild(el);
+    });
+    return;
+  }
+
+  // 기존 SVG 만화 (fallback)
+  const studentName = S.student?.name || 'You';
   comicData.panels.forEach((p, i) => {
     const setting = p.setting || p.background || 'classroom';
     const alexEmotion = p.alexEmotion || p.alexMood || 'happy';
     const stuEmotion  = p.studentEmotion || p.studentMood || 'happy';
     const alexText    = p.alexSays || '';
     const stuText     = p.studentSays || '';
-
     const W = 220, H = 160;
-    // 말풍선 높이 계산해서 캐릭터 위치 결정
     const alexLines = alexText ? Math.ceil(alexText.length / 14) : 0;
     const stuLines  = stuText  ? Math.ceil(stuText.length  / 14) : 0;
     const bubbleH   = Math.max(alexLines, stuLines) * 13 + 18;
     const charY     = bubbleH + 6;
-
     const svgContent = `
       ${drawBackground(setting, W, H)}
       ${alexText ? speechBubble(8, 4, 96, alexText, 'left', '#E8EBFF', '#1A1F5E') : ''}
@@ -1261,7 +1278,6 @@ function renderPanels(comicData) {
       ${drawAlex(10, charY, alexEmotion)}
       ${drawStudent(W-110, charY, stuEmotion, studentName)}
     `;
-
     const el = document.createElement('div');
     el.className = 'comic-panel';
     el.innerHTML = `
